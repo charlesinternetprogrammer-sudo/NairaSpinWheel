@@ -1,0 +1,25 @@
+services:
+  - type: web
+    name: nairaspinwheel-backend
+    env: node
+    region: oregon
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: FLW_SECRET_KEY
+        sync: false          # You will paste this manually in Render dashboard
+      - key: FLW_PUBLIC_KEY
+        value: FLWPUBK-ae05ff3a19727ac119a4e8ca64c248a2-X
+      - key: FLW_WEBHOOK_HASH
+        sync: false          # Paste from Flutterwave dashboard → Webhooks
+      - key: WEBHOOK_URL
+        fromService:
+          name: nairaspinwheel-backend
+          type: web
+          property: host
+      - key: ALLOWED_ORIGINS
+        value: "*"
+      - key: NODE_ENV
+        value: production
