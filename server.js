@@ -16,7 +16,7 @@ const app  = express();
 const PORT = process.env.PORT || 3000;
 
 // ─── SECRET KEY (set as environment variable — NEVER hardcode) ──────────────
-const FLW_SECRET_KEY    = process.env.FLW_SECRET_KEY;    // FLWSECK-xxxxx-X
+const FLW_SECRET_KEY    = process.env.FLW_SECRET_KEY    || 'FLWSECK-8f6689cbe7d5d9a329d6d0792eb0133e-19eabc';
 const FLW_PUBLIC_KEY    = process.env.FLW_PUBLIC_KEY || 'FLWPUBK-ae05ff3a19727ac119a4e8ca64c248a2-X';
 const FLW_WEBHOOK_HASH  = process.env.FLW_WEBHOOK_HASH;  // set in Flutterwave dashboard
 const FLW_BASE_URL      = 'https://api.flutterwave.com/v3';
