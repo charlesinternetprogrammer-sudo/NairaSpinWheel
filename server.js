@@ -21,9 +21,9 @@ const crypto    = require('crypto');
 const app  = express();
 const PORT = process.env.PORT || 4000;
 
-// ─── KEYS & CONFIG ──────────────────────────────────────────────────────────
-const FLW_SECRET_KEY   = process.env.FLW_SECRET_KEY   || 'FLWSECK-8f6689cbe7d5d9a329d6d0792eb0133e-19eabc';
-const FLW_PUBLIC_KEY   = process.env.FLW_PUBLIC_KEY   || 'FLWPUBK-ae05ff3a19727ac119a4e8ca64c248a2-X';
+// ─── KEYS & CONFIG ─────────────────────────────────────────────────────────
+const FLW_SECRET_KEY   = process.env.FLW_SECRET_KEY   || 'FLWSECK-68be972b3926b06d87bdd65f6c806447-19f6591a5d6vt-X';
+const FLW_PUBLIC_KEY   = process.env.FLW_PUBLIC_KEY   || 'FLWPUBK-31cfd58f509f25112471a165b6efd9b8-X';
 const FLW_WEBHOOK_HASH = process.env.FLW_WEBHOOK_HASH || 'incomepm-webhook-hash-2026';
 const FLW_BASE         = 'https://api.flutterwave.com/v3';
 
@@ -45,7 +45,7 @@ const nswWithdrawals = {};
 //   active: bool
 // }
 
-// ─── MIDDLEWARE ─────────────────────────────────────────────────────────────
+// ─── MIDDLEWARE ──────────────────────────────────────────────────────────
 app.use(helmet());
 app.use(morgan('combined'));
 app.use(express.json());
@@ -92,7 +92,7 @@ const BANK_CODES = {
   'Indulge MFB'            : '50992',
 };
 
-// ─── HELPERS ────────────────────────────────────────────────────────────────
+// ─── HELPERS ───────────────────────────────────────────────────────────
 function getBankCode(name) {
   if (!name) return null;
   if (BANK_CODES[name]) return BANK_CODES[name];
@@ -183,9 +183,9 @@ app.use((req, res, next) => {
   next();
 });
 
-// ══════════════════════════════════════════════════════════════════
+// ═════════════════════════════════════════════════════════════════
 //  ROUTES
-// ══════════════════════════════════════════════════════════════════
+// ═════════════════════════════════════════════════════════════════
 
 // GET /health
 app.get('/health', (req, res) => {
@@ -841,7 +841,7 @@ setInterval(() => {
   }
 }, 60000);
 
-// ─── START ───────────────────────────────────────────────────────────────────
+// ─── START ────────────────────────────────────────────────────────────
 app.listen(PORT, () => {
   console.log(`\n💰 IncomePM Server running on port ${PORT}`);
   console.log(`🔑 Secret key    : ${FLW_SECRET_KEY ? '✅ ' + FLW_SECRET_KEY.slice(0,12) + '...' : '❌ MISSING'}`);
