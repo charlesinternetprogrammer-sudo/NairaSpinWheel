@@ -1,0 +1,1867 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Naira Spin Wheel — Spin & Win</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Syne:wght@400;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --gold:#F4C430; --gold-light:#FFD966; --gold-dark:#C8960C;
+  --green:#00C853; --green-dark:#009624;
+  --red:#FF3D3D; --blue:#4A90FF;
+  --bg:#0A0A0F; --surface:#13131E; --surface2:#1C1C2E; --surface3:#252540;
+  --text:#F0EDE8; --muted:#7A7A9A; --border:rgba(244,196,48,0.15);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text);font-family:'Syne',sans-serif;min-height:100vh;overflow-x:hidden;position:relative;}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 80% 60% at 50% -10%,rgba(244,196,48,0.08) 0%,transparent 60%),radial-gradient(ellipse 60% 40% at 100% 100%,rgba(0,200,83,0.05) 0%,transparent 50%);pointer-events:none;z-index:0;}
+.noise{position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");pointer-events:none;z-index:0;opacity:.4;}
+.container{max-width:1120px;margin:0 auto;padding:20px 16px 60px;position:relative;z-index:1;}
+
+/* HEADER */
+header{text-align:center;padding:28px 0 20px;}
+.logo{font-family:'Bebas Neue',sans-serif;font-size:clamp(2.8rem,8vw,5rem);letter-spacing:0.06em;background:linear-gradient(135deg,var(--gold) 0%,var(--gold-light) 40%,var(--gold-dark) 80%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;filter:drop-shadow(0 0 30px rgba(244,196,48,0.35));line-height:1;}
+.logo span{background:linear-gradient(135deg,var(--green) 0%,#69FF97 60%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.tagline{color:var(--muted);font-size:0.82rem;letter-spacing:0.25em;text-transform:uppercase;margin-top:4px;font-weight:600;}
+
+/* DAILY BONUS BANNER */
+.bonus-banner{
+  background:linear-gradient(135deg,rgba(244,196,48,0.12) 0%,rgba(0,200,83,0.08) 100%);
+  border:1.5px solid rgba(244,196,48,0.35);
+  border-radius:16px;
+  padding:14px 22px;
+  display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;
+  margin:14px 0;
+  position:relative;overflow:hidden;
+}
+.bonus-banner::before{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(244,196,48,0.04),transparent);animation:shimmer 3s ease-in-out infinite;}
+@keyframes shimmer{0%{transform:translateX(-100%);}100%{transform:translateX(100%);}}
+.bonus-left{display:flex;align-items:center;gap:14px;}
+.bonus-icon{font-size:2.2rem;animation:bounce 2s ease-in-out infinite;}
+@keyframes bounce{0%,100%{transform:translateY(0);}50%{transform:translateY(-6px);}}
+.bonus-info{}
+.bonus-title{font-family:'Bebas Neue',sans-serif;font-size:1.3rem;letter-spacing:0.08em;color:var(--gold);}
+.bonus-sub{font-size:0.78rem;color:var(--muted);font-weight:600;}
+.bonus-amt{font-family:'Space Mono',monospace;font-size:1.5rem;font-weight:700;color:var(--green);}
+.btn-claim{
+  font-family:'Bebas Neue',sans-serif;font-size:1.1rem;letter-spacing:0.1em;
+  padding:10px 28px;
+  background:linear-gradient(135deg,var(--gold-dark),var(--gold));
+  color:#0A0A0F;border:none;border-radius:50px;cursor:pointer;
+  transition:all .2s;box-shadow:0 4px 16px rgba(244,196,48,0.35);
+  white-space:nowrap;position:relative;z-index:1;
+}
+.btn-claim:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(244,196,48,0.5);}
+.btn-claim:disabled{opacity:.5;cursor:not-allowed;transform:none;}
+.bonus-countdown{font-family:'Space Mono',monospace;font-size:0.82rem;color:var(--muted);text-align:center;}
+.bonus-countdown span{color:var(--gold-light);font-weight:700;}
+
+/* WALLET BAR */
+.wallet-bar{display:flex;align-items:center;justify-content:center;gap:10px;margin:14px 0;flex-wrap:wrap;}
+.wallet-card{background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:10px 18px;display:flex;align-items:center;gap:10px;}
+.wallet-label{font-size:0.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.15em;font-weight:700;}
+.wallet-amount{font-family:'Space Mono',monospace;font-size:1.25rem;font-weight:700;color:var(--gold);}
+.wallet-icon{font-size:1.3rem;}
+
+/* WALLET ACTION BUTTONS */
+.wallet-actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin:6px 0 16px;}
+.btn-deposit{
+  font-family:'Syne',sans-serif;font-weight:700;font-size:0.85rem;
+  padding:10px 24px;border:none;border-radius:10px;cursor:pointer;transition:all .2s;
+  background:linear-gradient(135deg,#1a5276,#2980b9);color:#fff;
+  box-shadow:0 4px 14px rgba(41,128,185,0.35);
+}
+.btn-deposit:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(41,128,185,0.45);}
+.btn-withdraw-top{
+  font-family:'Syne',sans-serif;font-weight:700;font-size:0.85rem;
+  padding:10px 24px;border:none;border-radius:10px;cursor:pointer;transition:all .2s;
+  background:linear-gradient(135deg,var(--green-dark),var(--green));color:#fff;
+  box-shadow:0 4px 14px rgba(0,200,83,0.3);
+}
+.btn-withdraw-top:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(0,200,83,0.4);}
+
+/* STATS */
+.stats-row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin:0 0 16px;}
+.stat-chip{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:6px 14px;font-size:0.75rem;font-family:'Space Mono',monospace;display:flex;flex-direction:column;align-items:center;gap:1px;}
+.stat-label{color:var(--muted);font-size:0.62rem;text-transform:uppercase;}
+.stat-value{color:var(--text);font-weight:700;}
+.stat-value.pos{color:var(--green);}
+.stat-value.neg{color:var(--red);}
+
+/* MAIN GRID */
+.main-grid{display:grid;grid-template-columns:1fr auto 1fr;gap:24px;align-items:start;}
+@media(max-width:820px){.main-grid{grid-template-columns:1fr;}.wheel-center{order:-1;}}
+
+/* WHEEL */
+.wheel-center{display:flex;flex-direction:column;align-items:center;gap:18px;}
+.wheel-wrapper{position:relative;width:min(360px,85vw);height:min(360px,85vw);}
+.wheel-wrapper::before{content:'';position:absolute;inset:-12px;border-radius:50%;background:conic-gradient(rgba(244,196,48,0.3) 0deg,rgba(0,200,83,0.2) 90deg,rgba(244,196,48,0.3) 180deg,rgba(0,200,83,0.2) 270deg,rgba(244,196,48,0.3) 360deg);filter:blur(14px);animation:ringPulse 3s ease-in-out infinite;z-index:-1;}
+@keyframes ringPulse{0%,100%{opacity:.6;}50%{opacity:1;}}
+canvas#wheel{border-radius:50%;display:block;width:100%;height:100%;filter:drop-shadow(0 8px 32px rgba(244,196,48,0.2));}
+.pointer{position:absolute;top:-20px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:14px solid transparent;border-right:14px solid transparent;border-top:36px solid var(--gold);filter:drop-shadow(0 4px 10px rgba(244,196,48,0.8));z-index:10;animation:pointerBob 1.5s ease-in-out infinite;}
+@keyframes pointerBob{0%,100%{transform:translateX(-50%) translateY(0);}50%{transform:translateX(-50%) translateY(-4px);}}
+.center-cap{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:52px;height:52px;background:radial-gradient(circle,#fff 0%,var(--gold) 50%,var(--gold-dark) 100%);border-radius:50%;z-index:5;box-shadow:0 0 20px rgba(244,196,48,0.6),inset 0 2px 4px rgba(255,255,255,0.4);}
+
+/* SPIN BTN */
+.spin-btn{font-family:'Bebas Neue',sans-serif;font-size:1.6rem;letter-spacing:0.1em;padding:14px 52px;background:linear-gradient(135deg,var(--gold-dark) 0%,var(--gold) 50%,var(--gold-light) 100%);color:#0A0A0F;border:none;border-radius:50px;cursor:pointer;transition:all .2s;box-shadow:0 4px 24px rgba(244,196,48,0.4),0 2px 0 rgba(0,0,0,0.3);position:relative;overflow:hidden;min-width:200px;text-align:center;}
+.spin-btn::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(255,255,255,0.25) 0%,transparent 60%);border-radius:inherit;}
+.spin-btn:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 8px 32px rgba(244,196,48,0.55);}
+.spin-btn:disabled{opacity:.5;cursor:not-allowed;transform:none;}
+
+/* PANELS */
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:22px;}
+.panel-title{font-family:'Bebas Neue',sans-serif;font-size:1.35rem;letter-spacing:0.08em;color:var(--gold);margin-bottom:14px;display:flex;align-items:center;gap:8px;}
+.bet-options{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;}
+.bet-btn{background:var(--surface2);border:1.5px solid var(--border);color:var(--text);font-family:'Space Mono',monospace;font-size:0.8rem;padding:9px 6px;border-radius:10px;cursor:pointer;transition:all .15s;text-align:center;font-weight:700;}
+.bet-btn:hover{border-color:var(--gold);color:var(--gold);}
+.bet-btn.active{background:rgba(244,196,48,0.12);border-color:var(--gold);color:var(--gold);box-shadow:0 0 12px rgba(244,196,48,0.2);}
+.custom-row{display:flex;gap:8px;margin-bottom:12px;}
+.custom-input{flex:1;background:var(--surface2);border:1.5px solid var(--border);color:var(--text);font-family:'Space Mono',monospace;font-size:0.9rem;padding:10px 12px;border-radius:10px;outline:none;transition:border-color .15s;}
+.custom-input:focus{border-color:var(--gold);}
+.custom-input::placeholder{color:var(--muted);}
+.apply-btn{background:var(--surface3);border:1.5px solid var(--border);color:var(--gold);font-family:'Syne',sans-serif;font-weight:700;font-size:0.78rem;padding:10px 12px;border-radius:10px;cursor:pointer;transition:all .15s;white-space:nowrap;}
+.apply-btn:hover{border-color:var(--gold);background:rgba(244,196,48,0.1);}
+.selected-bet{text-align:center;font-family:'Space Mono',monospace;font-size:0.95rem;color:var(--muted);font-weight:700;}
+.selected-bet strong{color:var(--gold-light);font-size:1.35rem;}
+.divider{height:1px;background:var(--border);margin:14px 0;}
+
+/* ODDS */
+.odds-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.04);font-size:0.8rem;}
+.odds-row:last-child{border-bottom:none;}
+.odds-color{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+.odds-name{color:var(--text);flex:1;margin-left:8px;font-weight:600;}
+.odds-chance{color:var(--muted);font-family:'Space Mono',monospace;font-size:0.72rem;}
+
+/* HISTORY */
+.history-list{display:flex;flex-direction:column;gap:6px;max-height:260px;overflow-y:auto;}
+.history-list::-webkit-scrollbar{width:4px;}
+.history-list::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
+.history-item{display:flex;align-items:center;justify-content:space-between;background:var(--surface2);border-radius:8px;padding:7px 11px;font-size:0.78rem;animation:slideIn .3s ease;}
+@keyframes slideIn{from{opacity:0;transform:translateX(-10px);}to{opacity:1;transform:translateX(0);}}
+.history-bet{color:var(--muted);font-family:'Space Mono',monospace;}
+.history-win{font-family:'Space Mono',monospace;font-weight:700;}
+.history-win.profit{color:var(--green);}
+.history-win.loss{color:var(--red);}
+.history-time{color:var(--muted);font-size:0.7rem;}
+.empty-history{text-align:center;color:var(--muted);font-size:0.82rem;padding:20px 0;}
+
+/* OVERLAYS */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,0.85);display:flex;align-items:center;justify-content:center;z-index:100;opacity:0;pointer-events:none;transition:opacity .3s;backdrop-filter:blur(6px);}
+.overlay.show{opacity:1;pointer-events:all;}
+
+/* RESULT CARD */
+.result-card{background:var(--surface);border-radius:28px;padding:38px 34px;text-align:center;max-width:380px;width:90%;border:1px solid var(--border);transform:scale(.8);transition:transform .4s cubic-bezier(.34,1.56,.64,1);box-shadow:0 24px 80px rgba(0,0,0,.5);}
+.overlay.show .result-card{transform:scale(1);}
+.result-emoji{font-size:3.2rem;margin-bottom:10px;}
+.result-title{font-family:'Bebas Neue',sans-serif;font-size:2.3rem;letter-spacing:0.08em;margin-bottom:6px;}
+.result-title.win{color:var(--gold);}
+.result-title.lose{color:var(--red);}
+.result-amount{font-family:'Space Mono',monospace;font-size:1.9rem;font-weight:700;color:var(--green);margin:12px 0;}
+.result-sub{color:var(--muted);font-size:0.83rem;margin-bottom:22px;line-height:1.5;}
+.result-actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;}
+.btn-withdraw-res{background:linear-gradient(135deg,var(--green-dark),var(--green));color:#fff;font-family:'Syne',sans-serif;font-weight:700;font-size:0.85rem;padding:11px 20px;border:none;border-radius:12px;cursor:pointer;transition:all .2s;box-shadow:0 4px 16px rgba(0,200,83,0.3);}
+.btn-withdraw-res:hover{transform:translateY(-2px);}
+.btn-again{background:var(--surface2);color:var(--text);font-family:'Syne',sans-serif;font-weight:700;font-size:0.85rem;padding:11px 20px;border:1.5px solid var(--border);border-radius:12px;cursor:pointer;transition:all .2s;}
+.btn-again:hover{border-color:var(--gold);color:var(--gold);}
+
+/* DEPOSIT MODAL */
+.modal-card{background:var(--surface);border-radius:28px;padding:34px;max-width:420px;width:92%;border:1px solid rgba(74,144,255,0.25);transform:scale(.8);transition:transform .4s cubic-bezier(.34,1.56,.64,1);box-shadow:0 24px 80px rgba(0,0,0,.5);}
+.overlay.show .modal-card{transform:scale(1);}
+.modal-title{font-family:'Bebas Neue',sans-serif;font-size:1.8rem;letter-spacing:0.08em;text-align:center;margin-bottom:20px;}
+.modal-title.blue{color:var(--blue);}
+.modal-title.green{color:var(--green);}
+.form-group{margin-bottom:13px;}
+.form-label{display:block;font-size:0.72rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.12em;margin-bottom:5px;}
+.form-input{width:100%;background:var(--surface2);border:1.5px solid var(--border);color:var(--text);font-family:'Space Mono',monospace;font-size:0.88rem;padding:11px 13px;border-radius:10px;outline:none;transition:border-color .15s;}
+.form-input:focus{border-color:var(--blue);}
+.form-select{width:100%;background:var(--surface2);border:1.5px solid var(--border);color:var(--text);font-family:'Syne',sans-serif;font-size:0.88rem;padding:11px 13px;border-radius:10px;outline:none;cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%237A7A9A' stroke-width='2' fill='none'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 13px center;padding-right:36px;}
+.amount-presets{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin:10px 0;}
+.preset-btn{background:var(--surface2);border:1.5px solid var(--border);color:var(--text);font-family:'Space Mono',monospace;font-size:0.78rem;padding:8px 4px;border-radius:8px;cursor:pointer;transition:all .15s;text-align:center;font-weight:700;}
+.preset-btn:hover,.preset-btn.active{border-color:var(--blue);color:var(--blue);background:rgba(74,144,255,0.08);}
+.btn-pay{width:100%;background:linear-gradient(135deg,#1a5276,#2980b9);color:#fff;font-family:'Bebas Neue',sans-serif;font-size:1.3rem;letter-spacing:0.1em;padding:14px;border:none;border-radius:12px;cursor:pointer;transition:all .2s;box-shadow:0 4px 18px rgba(41,128,185,0.35);margin-bottom:10px;}
+.btn-pay:hover{box-shadow:0 8px 28px rgba(41,128,185,.5);}
+.btn-withdraw-confirm{width:100%;background:linear-gradient(135deg,var(--green-dark),var(--green));color:#fff;font-family:'Bebas Neue',sans-serif;font-size:1.3rem;letter-spacing:0.1em;padding:14px;border:none;border-radius:12px;cursor:pointer;transition:all .2s;box-shadow:0 4px 18px rgba(0,200,83,0.3);margin-bottom:10px;}
+.btn-withdraw-confirm:hover{box-shadow:0 8px 28px rgba(0,200,83,.4);}
+.btn-cancel{width:100%;background:transparent;color:var(--muted);font-family:'Syne',sans-serif;font-size:0.83rem;padding:9px;border:none;cursor:pointer;transition:color .15s;}
+.btn-cancel:hover{color:var(--text);}
+.withdraw-amount-display{text-align:center;font-family:'Space Mono',monospace;font-size:1.45rem;font-weight:700;color:var(--green);background:rgba(0,200,83,0.08);border:1px solid rgba(0,200,83,0.2);border-radius:12px;padding:13px;margin-bottom:18px;}
+.flw-badge{display:flex;align-items:center;justify-content:center;gap:6px;font-size:0.72rem;color:var(--muted);margin-top:6px;}
+.flw-badge img{height:18px;opacity:.7;}
+
+/* PAYMENT METHOD SELECTOR */
+.pay-method-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0 14px;}
+.pay-method-btn{
+  background:var(--surface2);border:1.5px solid var(--border);
+  color:var(--text);border-radius:12px;padding:10px 8px;
+  cursor:pointer;transition:all .18s;text-align:center;
+  display:flex;flex-direction:column;align-items:center;gap:5px;
+}
+.pay-method-btn:hover{border-color:var(--blue);background:rgba(74,144,255,0.06);}
+.pay-method-btn.selected{
+  border-color:var(--blue);background:rgba(74,144,255,0.12);
+  box-shadow:0 0 14px rgba(74,144,255,0.2);
+}
+.pay-method-btn.selected .pay-method-icon{filter:none;}
+.pay-method-icon{font-size:1.5rem;line-height:1;}
+.pay-method-name{font-family:'Syne',sans-serif;font-weight:700;font-size:0.75rem;color:var(--text);}
+.pay-method-desc{font-size:0.65rem;color:var(--muted);font-family:'Space Mono',monospace;}
+.pay-method-btn.selected .pay-method-name{color:var(--blue);}
+.pay-method-check{
+  width:16px;height:16px;border-radius:50%;border:1.5px solid var(--border);
+  background:transparent;flex-shrink:0;margin-top:2px;
+  display:flex;align-items:center;justify-content:center;font-size:.6rem;
+  transition:all .15s;
+}
+.pay-method-btn.selected .pay-method-check{background:var(--blue);border-color:var(--blue);color:#fff;}
+.btn-pay-dynamic{
+  width:100%;color:#fff;font-family:'Bebas Neue',sans-serif;
+  font-size:1.3rem;letter-spacing:0.1em;padding:14px;border:none;
+  border-radius:12px;cursor:pointer;transition:all .2s;margin-bottom:10px;
+}
+.btn-pay-dynamic.method-card{background:linear-gradient(135deg,#1a3a6e,#2980b9);box-shadow:0 4px 18px rgba(41,128,185,0.35);}
+.btn-pay-dynamic.method-banktransfer{background:linear-gradient(135deg,#1a4a2e,#27ae60);box-shadow:0 4px 18px rgba(39,174,96,0.35);}
+.btn-pay-dynamic.method-opay{background:linear-gradient(135deg,#3a1a00,#e8820c);box-shadow:0 4px 18px rgba(232,130,12,0.35);}
+.btn-pay-dynamic.method-palmpay{background:linear-gradient(135deg,#003a1a,#00a859);box-shadow:0 4px 18px rgba(0,168,89,0.35);}
+.btn-pay-dynamic.method-ussd{background:linear-gradient(135deg,#2a0a4a,#8e44ad);box-shadow:0 4px 18px rgba(142,68,173,0.35);}
+.btn-pay-dynamic:hover{filter:brightness(1.12);transform:translateY(-2px);}
+
+/* BANK TRANSFER DETAILS PANEL */
+.bank-transfer-panel{display:none;margin-top:4px;}
+.bank-transfer-panel.show{display:block;}
+.bank-details-box{background:linear-gradient(135deg,rgba(0,200,83,0.06),rgba(74,144,255,0.06));border:1.5px solid rgba(0,200,83,0.25);border-radius:14px;padding:18px 20px;margin-bottom:14px;}
+.bank-details-title{font-family:'Bebas Neue',sans-serif;font-size:1.15rem;letter-spacing:.08em;color:var(--green);margin-bottom:12px;display:flex;align-items:center;gap:7px;}
+.bank-detail-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.05);}
+.bank-detail-row:last-child{border-bottom:none;}
+.bank-detail-label{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);}
+.bank-detail-val{font-family:'Space Mono',monospace;font-size:.88rem;font-weight:700;color:var(--text);display:flex;align-items:center;gap:8px;}
+.copy-btn{background:rgba(244,196,48,.1);border:1px solid rgba(244,196,48,.25);color:var(--gold);font-size:.65rem;font-weight:700;padding:3px 8px;border-radius:5px;cursor:pointer;transition:all .15s;font-family:'Syne',sans-serif;}
+.copy-btn:hover{background:rgba(244,196,48,.2);}
+.transfer-amount-highlight{background:rgba(0,200,83,.1);border:1.5px solid rgba(0,200,83,.3);border-radius:10px;padding:10px 14px;text-align:center;margin:10px 0 14px;}
+.transfer-amount-highlight .amt{font-family:'Space Mono',monospace;font-size:1.5rem;font-weight:700;color:var(--green);}
+.transfer-amount-highlight .note{font-size:.7rem;color:var(--muted);margin-top:3px;}
+.transfer-steps{margin:10px 0 14px;}
+.transfer-step{display:flex;align-items:flex-start;gap:10px;margin-bottom:9px;font-size:.78rem;color:var(--text);}
+.step-num{background:var(--gold);color:#0A0A0F;font-family:'Bebas Neue',sans-serif;font-size:.85rem;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;}
+.transfer-warning{background:rgba(244,196,48,.07);border:1px solid rgba(244,196,48,.2);border-radius:9px;padding:9px 13px;font-size:.72rem;color:var(--gold);line-height:1.5;margin-bottom:14px;}
+
+.pending-card{background:var(--surface);border-radius:28px;padding:36px 32px;text-align:center;max-width:400px;width:92%;border:1px solid rgba(74,144,255,0.3);transform:scale(.8);transition:transform .4s cubic-bezier(.34,1.56,.64,1);box-shadow:0 24px 80px rgba(0,0,0,.6);}
+.overlay.show .pending-card{transform:scale(1);}
+.pending-icon{font-size:3rem;margin-bottom:10px;}
+.pending-title{font-family:'Bebas Neue',sans-serif;font-size:1.9rem;letter-spacing:.08em;color:var(--blue);margin-bottom:6px;}
+.pending-sub{color:var(--muted);font-size:.83rem;line-height:1.6;margin-bottom:18px;}
+.pending-info-box{background:var(--surface2);border:1px solid rgba(74,144,255,0.2);border-radius:12px;padding:14px 18px;margin-bottom:16px;text-align:left;}
+.pending-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;font-size:.8rem;border-bottom:1px solid rgba(255,255,255,.04);}
+.pending-row:last-child{border-bottom:none;}
+.pending-row-label{color:var(--muted);font-weight:700;text-transform:uppercase;font-size:.67rem;letter-spacing:.1em;}
+.pending-row-val{font-family:'Space Mono',monospace;font-weight:700;color:var(--text);}
+.btn-confirm-paid{width:100%;background:linear-gradient(135deg,var(--green-dark),var(--green));color:#fff;font-family:'Bebas Neue',sans-serif;font-size:1.3rem;letter-spacing:.1em;padding:14px;border:none;border-radius:12px;cursor:pointer;transition:all .2s;box-shadow:0 4px 18px rgba(0,200,83,.3);margin-bottom:10px;}
+.btn-confirm-paid:hover{box-shadow:0 8px 28px rgba(0,200,83,.45);}
+.pending-warning{font-size:.72rem;color:var(--gold);background:rgba(244,196,48,.08);border:1px solid rgba(244,196,48,.2);border-radius:8px;padding:9px 13px;margin-bottom:14px;line-height:1.5;text-align:left;}
+/* FALLBACK LINK MODAL */
+.fallback-card{background:var(--surface);border-radius:28px;padding:34px 30px;text-align:center;max-width:380px;width:92%;border:1px solid rgba(255,61,61,0.2);transform:scale(.8);transition:transform .4s cubic-bezier(.34,1.56,.64,1);box-shadow:0 24px 80px rgba(0,0,0,.6);}
+.overlay.show .fallback-card{transform:scale(1);}
+.btn-open-link{display:block;width:100%;background:linear-gradient(135deg,#1a5276,#2980b9);color:#fff;font-family:'Bebas Neue',sans-serif;font-size:1.2rem;letter-spacing:.1em;padding:13px;border:none;border-radius:12px;cursor:pointer;text-decoration:none;text-align:center;margin:14px 0 10px;transition:all .2s;box-shadow:0 4px 18px rgba(41,128,185,.35);}
+.btn-open-link:hover{box-shadow:0 8px 28px rgba(41,128,185,.5);}
+
+/* DAILY BONUS MODAL */
+.bonus-modal-card{background:var(--surface);border-radius:28px;padding:38px 34px;text-align:center;max-width:360px;width:92%;border:1px solid rgba(244,196,48,0.3);transform:scale(.8);transition:transform .4s cubic-bezier(.34,1.56,.64,1);box-shadow:0 24px 80px rgba(0,0,0,.6);}
+.overlay.show .bonus-modal-card{transform:scale(1);}
+.bonus-modal-icon{font-size:4rem;margin-bottom:12px;animation:pulse 1s ease-in-out 3;}
+@keyframes pulse{0%,100%{transform:scale(1);}50%{transform:scale(1.2);}}
+.bonus-modal-title{font-family:'Bebas Neue',sans-serif;font-size:2.4rem;letter-spacing:0.1em;color:var(--gold);margin-bottom:8px;}
+.bonus-modal-amount{font-family:'Space Mono',monospace;font-size:2.5rem;font-weight:700;color:var(--green);margin:14px 0;}
+.bonus-modal-sub{color:var(--muted);font-size:0.85rem;line-height:1.5;margin-bottom:22px;}
+.bonus-streak{display:flex;gap:6px;justify-content:center;margin:14px 0;}
+.streak-day{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:700;font-family:'Space Mono',monospace;border:1.5px solid var(--border);color:var(--muted);background:var(--surface2);}
+.streak-day.done{background:rgba(244,196,48,0.15);border-color:var(--gold);color:var(--gold);}
+.streak-day.today{background:var(--gold);color:#0A0A0F;border-color:var(--gold-dark);box-shadow:0 0 12px rgba(244,196,48,0.5);}
+.btn-collect{font-family:'Bebas Neue',sans-serif;font-size:1.5rem;letter-spacing:0.1em;padding:14px 48px;background:linear-gradient(135deg,var(--gold-dark),var(--gold));color:#0A0A0F;border:none;border-radius:50px;cursor:pointer;transition:all .2s;box-shadow:0 4px 20px rgba(244,196,48,.45);}
+.btn-collect:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(244,196,48,.6);}
+
+/* CONFETTI */
+.confetti-piece{position:fixed;width:10px;height:10px;border-radius:2px;pointer-events:none;z-index:200;animation:confettiFall linear forwards;}
+@keyframes confettiFall{0%{transform:translateY(-20px) rotate(0deg);opacity:1;}100%{transform:translateY(100vh) rotate(720deg);opacity:0;}}
+
+/* TOAST */
+.success-toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(80px);color:#fff;font-family:'Syne',sans-serif;font-weight:700;font-size:0.88rem;padding:13px 26px;border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,.4);z-index:300;transition:transform .4s cubic-bezier(.34,1.56,.64,1);white-space:nowrap;max-width:90vw;text-align:center;}
+.success-toast.show{transform:translateX(-50%) translateY(0);}
+
+/* FLW LOADER */
+.flw-loader{display:flex;flex-direction:column;align-items:center;gap:14px;padding:30px 0;}
+.spinner{width:44px;height:44px;border:4px solid var(--border);border-top-color:var(--blue);border-radius:50%;animation:spin .8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+/* ===== TRANSACTION HISTORY SECTION ===== */
+.txn-section{margin-top:36px;}
+.txn-section-header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:18px;}
+.txn-section-title{font-family:'Bebas Neue',sans-serif;font-size:1.8rem;letter-spacing:0.08em;color:var(--gold);display:flex;align-items:center;gap:10px;}
+.txn-section-title span{font-family:'Space Mono',monospace;font-size:0.78rem;background:rgba(244,196,48,0.12);border:1px solid rgba(244,196,48,0.3);color:var(--gold);padding:3px 10px;border-radius:20px;letter-spacing:.05em;}
+.btn-clear-txn{font-family:'Syne',sans-serif;font-weight:700;font-size:0.75rem;padding:7px 16px;background:transparent;border:1.5px solid rgba(255,61,61,0.3);color:var(--red);border-radius:8px;cursor:pointer;transition:all .15s;}
+.btn-clear-txn:hover{background:rgba(255,61,61,0.1);border-color:var(--red);}
+
+/* Summary cards row */
+.txn-summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:18px;}
+.txn-sum-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px 16px;display:flex;flex-direction:column;gap:4px;}
+.txn-sum-label{font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.14em;color:var(--muted);}
+.txn-sum-value{font-family:'Space Mono',monospace;font-size:1.1rem;font-weight:700;}
+.txn-sum-value.green{color:var(--green);}
+.txn-sum-value.gold{color:var(--gold);}
+.txn-sum-value.blue{color:var(--blue);}
+.txn-sum-value.red{color:var(--red);}
+.txn-sum-value.white{color:var(--text);}
+.txn-sum-icon{font-size:1.3rem;margin-bottom:2px;}
+
+/* Tab bar */
+.txn-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;}
+.txn-tab{font-family:'Syne',sans-serif;font-weight:700;font-size:0.78rem;padding:7px 16px;background:var(--surface2);border:1.5px solid var(--border);color:var(--muted);border-radius:8px;cursor:pointer;transition:all .15s;white-space:nowrap;}
+.txn-tab:hover{border-color:var(--gold);color:var(--text);}
+.txn-tab.active{background:rgba(244,196,48,0.12);border-color:var(--gold);color:var(--gold);}
+.txn-tab .tab-count{font-family:'Space Mono',monospace;font-size:0.68rem;background:rgba(244,196,48,0.15);padding:1px 6px;border-radius:10px;margin-left:5px;}
+
+/* Search & filter row */
+.txn-controls{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;}
+.txn-search{flex:1;min-width:160px;background:var(--surface2);border:1.5px solid var(--border);color:var(--text);font-family:'Space Mono',monospace;font-size:0.82rem;padding:9px 13px;border-radius:9px;outline:none;transition:border-color .15s;}
+.txn-search:focus{border-color:var(--gold);}
+.txn-search::placeholder{color:var(--muted);}
+.txn-sort{background:var(--surface2);border:1.5px solid var(--border);color:var(--text);font-family:'Syne',sans-serif;font-size:0.8rem;padding:9px 32px 9px 12px;border-radius:9px;outline:none;cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='7' viewBox='0 0 10 7'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%237A7A9A' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;}
+
+/* Table */
+.txn-table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:16px;overflow:hidden;}
+.txn-table-head{display:grid;grid-template-columns:2fr 1.2fr 1.2fr 1fr 1.4fr;gap:0;background:var(--surface2);border-bottom:1px solid var(--border);padding:10px 16px;}
+.txn-th{font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.14em;color:var(--muted);}
+.txn-list{max-height:380px;overflow-y:auto;}
+.txn-list::-webkit-scrollbar{width:4px;}
+.txn-list::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
+.txn-row{display:grid;grid-template-columns:2fr 1.2fr 1.2fr 1fr 1.4fr;gap:0;padding:11px 16px;border-bottom:1px solid rgba(255,255,255,0.03);transition:background .15s;animation:fadeRow .3s ease;}
+.txn-row:last-child{border-bottom:none;}
+.txn-row:hover{background:rgba(255,255,255,0.025);}
+@keyframes fadeRow{from{opacity:0;transform:translateY(-4px);}to{opacity:1;transform:translateY(0);}}
+.txn-cell{display:flex;align-items:center;font-size:0.8rem;}
+.txn-cell.right{justify-content:flex-end;}
+.txn-type-badge{display:inline-flex;align-items:center;gap:5px;font-size:0.72rem;font-weight:700;padding:3px 9px;border-radius:6px;white-space:nowrap;}
+.badge-deposit{background:rgba(74,144,255,0.12);color:var(--blue);border:1px solid rgba(74,144,255,0.25);}
+.badge-withdraw{background:rgba(0,200,83,0.1);color:var(--green);border:1px solid rgba(0,200,83,0.2);}
+.badge-win{background:rgba(244,196,48,0.1);color:var(--gold);border:1px solid rgba(244,196,48,0.2);}
+.badge-bonus{background:rgba(207,96,255,0.1);color:#CF60FF;border:1px solid rgba(207,96,255,0.2);}
+.badge-bet{background:rgba(255,61,61,0.1);color:var(--red);border:1px solid rgba(255,61,61,0.2);}
+.txn-amount{font-family:'Space Mono',monospace;font-weight:700;font-size:0.82rem;}
+.txn-amount.credit{color:var(--green);}
+.txn-amount.debit{color:var(--red);}
+.txn-status-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;margin-right:6px;}
+.txn-ref{font-family:'Space Mono',monospace;font-size:0.68rem;color:var(--muted);}
+.txn-time-cell{font-size:0.72rem;color:var(--muted);font-family:'Space Mono',monospace;}
+.txn-desc{font-size:0.78rem;color:var(--text);font-weight:600;}
+.txn-desc small{display:block;font-size:0.68rem;color:var(--muted);font-weight:400;}
+.txn-empty{text-align:center;padding:40px 20px;color:var(--muted);}
+.txn-empty-icon{font-size:2.5rem;margin-bottom:10px;}
+.txn-empty-text{font-size:0.88rem;}
+.txn-pagination{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-top:1px solid var(--border);background:var(--surface2);}
+.txn-page-info{font-size:0.72rem;color:var(--muted);font-family:'Space Mono',monospace;}
+.txn-page-btns{display:flex;gap:6px;}
+.txn-page-btn{background:var(--surface3);border:1.5px solid var(--border);color:var(--text);font-size:0.75rem;padding:5px 12px;border-radius:6px;cursor:pointer;transition:all .15s;font-family:'Syne',sans-serif;font-weight:700;}
+.txn-page-btn:hover:not(:disabled){border-color:var(--gold);color:var(--gold);}
+.txn-page-btn:disabled{opacity:.4;cursor:not-allowed;}
+
+/* Mobile responsiveness for table */
+@media(max-width:600px){
+  .txn-table-head,.txn-row{grid-template-columns:2fr 1fr 1fr;}
+  .txn-th:nth-child(4),.txn-th:nth-child(5),.txn-cell:nth-child(4),.txn-cell:nth-child(5){display:none;}
+}
+
+/* WITHDRAWAL SMS ALERT STYLES */
+.sms-alert-box{background:linear-gradient(135deg,rgba(0,200,83,0.08),rgba(74,144,255,0.06));border:1.5px solid rgba(0,200,83,0.3);border-radius:14px;padding:16px 18px;margin:14px 0;}
+.sms-alert-title{font-family:'Bebas Neue',sans-serif;font-size:1.05rem;letter-spacing:.07em;color:var(--green);margin-bottom:10px;display:flex;align-items:center;gap:7px;}
+.sms-bubble{background:var(--surface2);border:1px solid rgba(0,200,83,0.2);border-radius:12px 12px 12px 4px;padding:12px 14px;position:relative;margin-top:12px;}
+.sms-bubble::before{content:'';position:absolute;top:-10px;left:14px;font-size:1rem;}
+.sms-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:7px;}
+.sms-from{font-size:.65rem;color:var(--green);font-weight:700;letter-spacing:.1em;}
+.sms-timestamp{font-size:.62rem;color:var(--muted);}
+.sms-text{font-family:'Space Mono',monospace;font-size:.74rem;color:var(--text);line-height:1.75;}
+.sms-text .sms-highlight{color:var(--green);font-weight:700;}
+.sms-text .sms-ref{color:var(--gold);}
+
+/* WITHDRAWAL STATUS in history */
+.w-status-badge{display:inline-flex;align-items:center;gap:4px;font-size:.68rem;font-weight:700;padding:2px 8px;border-radius:5px;white-space:nowrap;}
+.w-status-processing{background:rgba(244,196,48,0.12);color:var(--gold);border:1px solid rgba(244,196,48,0.25);}
+.w-status-sent{background:rgba(0,200,83,0.12);color:var(--green);border:1px solid rgba(0,200,83,0.25);}
+
+/* WITHDRAWAL SUCCESS MODAL */
+.w-success-card{background:var(--surface);border-radius:28px;padding:34px 30px;text-align:center;max-width:430px;width:92%;border:1px solid rgba(0,200,83,0.3);transform:scale(.8);transition:transform .4s cubic-bezier(.34,1.56,.64,1);box-shadow:0 24px 80px rgba(0,0,0,.6);max-height:92vh;overflow-y:auto;}
+.overlay.show .w-success-card{transform:scale(1);}
+.w-success-icon{font-size:3rem;margin-bottom:8px;}
+.w-success-title{font-family:'Bebas Neue',sans-serif;font-size:2rem;letter-spacing:.08em;color:var(--green);margin-bottom:4px;}
+.w-success-sub{color:var(--muted);font-size:.82rem;margin-bottom:16px;line-height:1.5;}
+.w-info-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 0 16px;}
+.w-info-cell{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 12px;text-align:left;}
+.w-info-label{font-size:.6rem;color:var(--muted);text-transform:uppercase;letter-spacing:.12em;font-weight:700;margin-bottom:3px;}
+.w-info-val{font-family:'Space Mono',monospace;font-size:.78rem;font-weight:700;color:var(--text);word-break:break-all;}
+
+/* ===== SHARE BUTTON ===== */
+.btn-share-top{
+  font-family:'Syne',sans-serif;font-weight:700;font-size:.85rem;
+  padding:10px 22px;border:none;border-radius:10px;cursor:pointer;transition:all .2s;
+  background:linear-gradient(135deg,#6a11cb,#a855f7);color:#fff;
+  box-shadow:0 4px 14px rgba(168,85,247,0.35);
+  display:flex;align-items:center;gap:7px;
+}
+.btn-share-top:hover{transform:translateY(-2px);box-shadow:0 8px 22px rgba(168,85,247,.48);}
+
+/* SHARE MODAL */
+.share-modal-card{background:var(--surface);border-radius:28px;padding:34px 30px;max-width:440px;width:92%;border:1px solid rgba(168,85,247,0.3);transform:scale(.8);transition:transform .4s cubic-bezier(.34,1.56,.64,1);box-shadow:0 24px 80px rgba(0,0,0,.6);text-align:center;}
+.overlay.show .share-modal-card{transform:scale(1);}
+.share-modal-title{font-family:'Bebas Neue',sans-serif;font-size:2rem;letter-spacing:.08em;color:#a855f7;margin-bottom:4px;}
+.share-modal-sub{color:var(--muted);font-size:.82rem;margin-bottom:20px;line-height:1.5;}
+
+/* Share preview card */
+.share-preview{background:linear-gradient(135deg,#0A0A1F 0%,#1a1a3e 50%,#0d1f0d 100%);border:1.5px solid rgba(168,85,247,0.3);border-radius:18px;padding:22px 20px;margin-bottom:20px;position:relative;overflow:hidden;}
+.share-preview::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 80% 60% at 50% 0%,rgba(168,85,247,0.15) 0%,transparent 70%);pointer-events:none;}
+.share-preview-logo{font-family:'Bebas Neue',sans-serif;font-size:1.6rem;letter-spacing:.06em;background:linear-gradient(135deg,#F4C430,#FFD966);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:6px;}
+.share-preview-logo span{background:linear-gradient(135deg,#00C853,#69FF97);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.share-preview-msg{font-family:'Syne',sans-serif;font-size:.92rem;font-weight:700;color:var(--text);margin:8px 0 4px;line-height:1.4;}
+.share-preview-amt{font-family:'Space Mono',monospace;font-size:1.8rem;font-weight:700;color:var(--green);margin:6px 0;}
+.share-preview-tag{font-size:.72rem;color:var(--muted);}
+.share-preview-emoji{font-size:2rem;margin-bottom:4px;}
+
+/* Platform share buttons */
+.share-platforms{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px;}
+.share-platform-btn{display:flex;flex-direction:column;align-items:center;gap:6px;padding:14px 8px;border-radius:14px;border:1.5px solid var(--border);background:var(--surface2);cursor:pointer;transition:all .18s;text-decoration:none;}
+.share-platform-btn:hover{transform:translateY(-3px);border-color:var(--current-color,var(--gold));}
+.share-platform-icon{font-size:1.6rem;line-height:1;}
+.share-platform-name{font-family:'Syne',sans-serif;font-weight:700;font-size:.7rem;color:var(--text);}
+
+/* Copy link row */
+.share-link-row{display:flex;gap:8px;align-items:center;background:var(--surface2);border:1.5px solid var(--border);border-radius:10px;padding:10px 14px;margin-bottom:14px;}
+.share-link-text{flex:1;font-family:'Space Mono',monospace;font-size:.75rem;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:left;}
+.share-copy-link-btn{background:rgba(168,85,247,.15);border:1px solid rgba(168,85,247,.3);color:#a855f7;font-family:'Syne',sans-serif;font-size:.72rem;font-weight:700;padding:5px 12px;border-radius:7px;cursor:pointer;transition:all .15s;white-space:nowrap;}
+.share-copy-link-btn:hover{background:rgba(168,85,247,.28);}
+
+/* Share result button inside win modal */
+.btn-share-result{background:linear-gradient(135deg,#6a11cb,#a855f7);color:#fff;font-family:'Syne',sans-serif;font-weight:700;font-size:.85rem;padding:11px 20px;border:none;border-radius:12px;cursor:pointer;transition:all .2s;box-shadow:0 4px 14px rgba(168,85,247,.3);}
+.btn-share-result:hover{transform:translateY(-2px);box-shadow:0 8px 22px rgba(168,85,247,.45);}
+
+
+</style>
+</head>
+<body>
+<div class="noise"></div>
+<div class="container">
+
+<!-- HEADER -->
+<header>
+  <div class="logo">Naira <span>Spin Wheel</span></div>
+  <div class="tagline">🇳🇬 Spin. Win. Withdraw Instantly.</div>
+</header>
+
+<!-- DAILY BONUS BANNER -->
+<div class="bonus-banner" id="bonusBanner">
+  <div class="bonus-left">
+    <div class="bonus-icon">🎁</div>
+    <div class="bonus-info">
+      <div class="bonus-title">Free Bonus</div>
+      <div class="bonus-sub" id="bonusSubText">₦500 free bonus — claim every 5 minutes!</div>
+    </div>
+  </div>
+  <div style="text-align:center">
+    <div class="bonus-amt" id="bonusAmtDisplay">₦500</div>
+    <div class="bonus-countdown" id="bonusCountdown" style="display:none">Next in: <span id="countdownTimer">05:00</span></div>
+  </div>
+  <button class="btn-claim" id="btnClaim" onclick="openBonusModal()">CLAIM NOW 🎉</button>
+</div>
+
+<!-- WALLET BAR -->
+<div class="wallet-bar">
+  <div class="wallet-card">
+    <span class="wallet-icon">💼</span>
+    <div>
+      <div class="wallet-label">Wallet Balance</div>
+      <div class="wallet-amount" id="walletDisplay">₦0.00</div>
+    </div>
+  </div>
+  <div class="wallet-card">
+    <span class="wallet-icon">🏆</span>
+    <div>
+      <div class="wallet-label">Total Winnings</div>
+      <div class="wallet-amount" id="winningsDisplay">₦0.00</div>
+    </div>
+  </div>
+</div>
+
+<!-- DEPOSIT / WITHDRAW BUTTONS -->
+<div class="wallet-actions">
+  <button class="btn-deposit" onclick="openDepositModal()">💳 Deposit with Flutterwave</button>
+  <button class="btn-withdraw-top" onclick="openWithdrawModal()">🏦 Withdraw to Bank</button>
+  <button class="btn-share-top" onclick="openShareModal()">🚀 Share & Invite</button>
+</div>
+
+<!-- STATS -->
+<div class="stats-row">
+  <div class="stat-chip"><span class="stat-label">Spins</span><span class="stat-value" id="spinCount">0</span></div>
+  <div class="stat-chip"><span class="stat-label">Wins</span><span class="stat-value pos" id="winCount">0</span></div>
+  <div class="stat-chip"><span class="stat-label">Net P&L</span><span class="stat-value" id="netPnl">₦0</span></div>
+  <div class="stat-chip"><span class="stat-label">Claims</span><span class="stat-value" id="streakDisplay" style="color:var(--gold)">🎁 0</span></div>
+</div>
+
+<!-- MAIN GRID -->
+<div class="main-grid">
+
+  <!-- LEFT: BET -->
+  <div class="panel">
+    <div class="panel-title">💰 Minimum Stake: ₦50</div>
+    <div class="bet-options">
+      <button class="bet-btn" onclick="setBet(50)">₦50</button>
+      <button class="bet-btn" onclick="setBet(100)">₦100</button>
+      <button class="bet-btn" onclick="setBet(200)">₦200</button>
+      <button class="bet-btn" onclick="setBet(500)">₦500</button>
+      <button class="bet-btn" onclick="setBet(1000)">₦1,000</button>
+      <button class="bet-btn" onclick="setBet(5000)">₦5,000</button>
+      <button class="bet-btn" onclick="setBet(50000)">₦50,000</button>
+    </div>
+    <div class="custom-row">
+      <input class="custom-input" type="number" id="customAmt" placeholder="Custom stake amount (₦)" min="50">
+      <button class="apply-btn" onclick="applyCustom()">Apply</button>
+    </div>
+    <div class="selected-bet">Stake: <strong id="betDisplay">₦50</strong></div>
+    <div class="divider"></div>
+    <div class="panel-title" style="font-size:1.05rem;margin-bottom:10px;">📊 Payout Odds</div>
+    <div id="oddsTable"></div>
+  </div>
+
+  <!-- CENTER: WHEEL -->
+  <div class="wheel-center">
+    <div class="wheel-wrapper">
+      <div class="pointer"></div>
+      <canvas id="wheel" width="360" height="360"></canvas>
+      <div class="center-cap"></div>
+    </div>
+    <button class="spin-btn" id="spinBtn" onclick="spinWheel()">🎰 SPIN!</button>
+  </div>
+
+  <!-- RIGHT: HISTORY -->
+  <div class="panel">
+    <div class="panel-title">🕐 Spin History</div>
+    <div class="history-list" id="historyList">
+      <div class="empty-history">No spins yet — stake from ₦50 and spin!</div>
+    </div>
+  </div>
+
+</div><!-- /main-grid -->
+
+<!-- ===== TRANSACTION HISTORY SECTION ===== -->
+<div class="txn-section">
+  <div class="txn-section-header">
+    <div class="txn-section-title">📋 Transaction History <span id="txnTotalBadge">0 records</span></div>
+    <button class="btn-clear-txn" onclick="clearAllTransactions()">🗑 Clear All</button>
+  </div>
+
+  <!-- Summary Cards -->
+  <div class="txn-summary">
+    <div class="txn-sum-card">
+      <div class="txn-sum-icon">💳</div>
+      <div class="txn-sum-label">Total Deposited</div>
+      <div class="txn-sum-value blue" id="sumDeposited">₦0</div>
+    </div>
+    <div class="txn-sum-card">
+      <div class="txn-sum-icon">🏦</div>
+      <div class="txn-sum-label">Total Withdrawn</div>
+      <div class="txn-sum-value green" id="sumWithdrawn">₦0</div>
+    </div>
+    <div class="txn-sum-card">
+      <div class="txn-sum-icon">🎰</div>
+      <div class="txn-sum-label">Total Wagered</div>
+      <div class="txn-sum-value red" id="sumWagered">₦0</div>
+    </div>
+    <div class="txn-sum-card">
+      <div class="txn-sum-icon">🏆</div>
+      <div class="txn-sum-label">Total Won</div>
+      <div class="txn-sum-value gold" id="sumWon">₦0</div>
+    </div>
+    <div class="txn-sum-card">
+      <div class="txn-sum-icon">🎁</div>
+      <div class="txn-sum-label">Bonus Earned</div>
+      <div class="txn-sum-value" id="sumBonus" style="color:#CF60FF">₦0</div>
+    </div>
+    <div class="txn-sum-card">
+      <div class="txn-sum-icon">📊</div>
+      <div class="txn-sum-label">Net Profit</div>
+      <div class="txn-sum-value" id="sumNetProfit">₦0</div>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="txn-tabs">
+    <button class="txn-tab active" onclick="setTxnTab('all')" id="tab-all">All <span class="tab-count" id="cnt-all">0</span></button>
+    <button class="txn-tab" onclick="setTxnTab('deposit')" id="tab-deposit">💳 Deposits <span class="tab-count" id="cnt-deposit">0</span></button>
+    <button class="txn-tab" onclick="setTxnTab('withdraw')" id="tab-withdraw">🏦 Withdrawals <span class="tab-count" id="cnt-withdraw">0</span></button>
+    <button class="txn-tab" onclick="setTxnTab('win')" id="tab-win">🎰 Spin Wins <span class="tab-count" id="cnt-win">0</span></button>
+    <button class="txn-tab" onclick="setTxnTab('bonus')" id="tab-bonus">🎁 Bonuses <span class="tab-count" id="cnt-bonus">0</span></button>
+    <button class="txn-tab" onclick="setTxnTab('bet')" id="tab-bet">🎲 Bets <span class="tab-count" id="cnt-bet">0</span></button>
+  </div>
+
+  <!-- Controls -->
+  <div class="txn-controls">
+    <input class="txn-search" id="txnSearch" placeholder="🔍  Search by reference, amount, description..." oninput="renderTxnTable()">
+    <select class="txn-sort" id="txnSort" onchange="renderTxnTable()">
+      <option value="newest">Newest First</option>
+      <option value="oldest">Oldest First</option>
+      <option value="highest">Highest Amount</option>
+      <option value="lowest">Lowest Amount</option>
+    </select>
+  </div>
+
+  <!-- Table -->
+  <div class="txn-table-wrap">
+    <div class="txn-table-head">
+      <div class="txn-th">Description</div>
+      <div class="txn-th">Amount</div>
+      <div class="txn-th">Type</div>
+      <div class="txn-th">Status</div>
+      <div class="txn-th">Date &amp; Time</div>
+    </div>
+    <div class="txn-list" id="txnList">
+      <div class="txn-empty">
+        <div class="txn-empty-icon">📭</div>
+        <div class="txn-empty-text">No transactions yet. Deposit or spin to get started!</div>
+      </div>
+    </div>
+    <div class="txn-pagination" id="txnPagination" style="display:none">
+      <div class="txn-page-info" id="txnPageInfo"></div>
+      <div class="txn-page-btns">
+        <button class="txn-page-btn" id="btnPrevPage" onclick="changePage(-1)">← Prev</button>
+        <button class="txn-page-btn" id="btnNextPage" onclick="changePage(1)">Next →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div><!-- /container -->
+
+<!-- ===== RESULT MODAL ===== -->
+<div class="overlay" id="resultOverlay">
+  <div class="result-card">
+    <div class="result-emoji" id="resultEmoji"></div>
+    <div class="result-title" id="resultTitle"></div>
+    <div class="result-amount" id="resultAmount"></div>
+    <div class="result-sub" id="resultSub"></div>
+    <div class="result-actions">
+      <button class="btn-withdraw-res" id="withdrawResBtn" onclick="openWithdrawModal(true)" style="display:none">🏦 Withdraw</button>
+      <button class="btn-share-result" id="shareResultBtn" onclick="openShareModal(true)" style="display:none">🚀 Share Win</button>
+      <button class="btn-again" onclick="closeResult()">🎰 Spin Again</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== DEPOSIT MODAL ===== -->
+<div class="overlay" id="depositOverlay">
+  <div class="modal-card" style="max-height:94vh;overflow-y:auto;">
+    <div class="modal-title blue">💳 Deposit to Naira Spin Wheel</div>
+
+    <!-- PAYMENT METHOD SELECTOR -->
+    <div class="form-group">
+      <label class="form-label">Select Payment Method</label>
+      <div class="pay-method-grid">
+        <button class="pay-method-btn selected" onclick="selectPayMethod('card',this)">
+          <div class="pay-method-icon">💳</div>
+          <div class="pay-method-name">Debit / Credit Card</div>
+          <div class="pay-method-desc">Visa · Mastercard</div>
+          <div class="pay-method-check">✓</div>
+        </button>
+        <button class="pay-method-btn" onclick="selectPayMethod('account',this)">
+          <div class="pay-method-icon">🏦</div>
+          <div class="pay-method-name">Bank Transfer</div>
+          <div class="pay-method-desc">All Nigerian banks</div>
+          <div class="pay-method-check">✓</div>
+        </button>
+        <button class="pay-method-btn" onclick="selectPayMethod('opay',this)">
+          <div class="pay-method-icon">🟠</div>
+          <div class="pay-method-name">OPay</div>
+          <div class="pay-method-desc">OPay wallet</div>
+          <div class="pay-method-check">✓</div>
+        </button>
+        <button class="pay-method-btn" onclick="selectPayMethod('palmpay',this)">
+          <div class="pay-method-icon">🟢</div>
+          <div class="pay-method-name">PalmPay</div>
+          <div class="pay-method-desc">PalmPay wallet</div>
+          <div class="pay-method-check">✓</div>
+        </button>
+        <button class="pay-method-btn" onclick="selectPayMethod('ussd',this)">
+          <div class="pay-method-icon">📱</div>
+          <div class="pay-method-name">USSD</div>
+          <div class="pay-method-desc">*737# *901# etc.</div>
+          <div class="pay-method-check">✓</div>
+        </button>
+        <button class="pay-method-btn" onclick="selectPayMethod('card,account,ussd,opay,palmpay',this)">
+          <div class="pay-method-icon">⚡</div>
+          <div class="pay-method-name">All Methods</div>
+          <div class="pay-method-desc">Let me choose</div>
+          <div class="pay-method-check">✓</div>
+        </button>
+      </div>
+    </div>
+
+    <!-- AMOUNT FIELD (always visible) -->
+    <div class="form-group">
+      <label class="form-label">Amount (₦)</label>
+      <div class="amount-presets">
+        <button class="preset-btn" onclick="setDepositAmt(500)">₦500</button>
+        <button class="preset-btn" onclick="setDepositAmt(1000)">₦1K</button>
+        <button class="preset-btn" onclick="setDepositAmt(2000)">₦2K</button>
+        <button class="preset-btn" onclick="setDepositAmt(5000)">₦5K</button>
+        <button class="preset-btn" onclick="setDepositAmt(10000)">₦10K</button>
+        <button class="preset-btn" onclick="setDepositAmt(50000)">₦50K</button>
+      </div>
+      <input class="form-input" id="depAmount" type="number" placeholder="Or enter custom amount" min="100" style="border-color:rgba(74,144,255,0.3)" oninput="onAmountChange()">
+    </div>
+
+    <!-- BANK TRANSFER DETAILS PANEL (shown only when Bank Transfer selected) -->
+    <div class="bank-transfer-panel" id="bankTransferPanel">
+      <div class="bank-details-box">
+        <div class="bank-details-title">🏦 Transfer to this Account</div>
+        <div class="bank-detail-row">
+          <span class="bank-detail-label">Bank Name</span>
+          <span class="bank-detail-val">United Bank For Africa (UBA)
+            <button class="copy-btn" onclick="copyText('United Bank For Africa')">Copy</button>
+          </span>
+        </div>
+        <div class="bank-detail-row">
+          <span class="bank-detail-label">Account Number</span>
+          <span class="bank-detail-val" id="bankAcctNum">2087106451
+            <button class="copy-btn" onclick="copyText('2087106451')">Copy</button>
+          </span>
+        </div>
+        <div class="bank-detail-row">
+          <span class="bank-detail-label">Account Name</span>
+          <span class="bank-detail-val">Dick Charles Benson
+            <button class="copy-btn" onclick="copyText('Dick Charles Benson')">Copy</button>
+          </span>
+        </div>
+        <div class="bank-detail-row">
+          <span class="bank-detail-label">Reference</span>
+          <span class="bank-detail-val" id="transferRef" style="font-size:.72rem">—
+            <button class="copy-btn" id="copyRefBtn" onclick="copyText(document.getElementById('transferRef').dataset.ref)">Copy</button>
+          </span>
+        </div>
+      </div>
+      <div class="transfer-amount-highlight">
+        <div class="amt" id="transferAmtDisplay">₦0</div>
+        <div class="note">Transfer exactly this amount with the reference above</div>
+      </div>
+      <div class="transfer-steps">
+        <div class="transfer-step"><div class="step-num">1</div><span>Copy the account number and reference above</span></div>
+        <div class="transfer-step"><div class="step-num">2</div><span>Open your bank app or USSD and transfer the exact amount to UBA (United Bank For Africa) — 2087106451</span></div>
+        <div class="transfer-step"><div class="step-num">3</div><span>Use the reference as your narration/description</span></div>
+        <div class="transfer-step"><div class="step-num">4</div><span>Come back and click <strong style="color:var(--green)">"I Have Transferred"</strong> below</span></div>
+      </div>
+      <div class="transfer-warning">⚠️ Always include the <strong>reference code</strong> in your transfer narration. Only click confirm after your bank shows a successful debit.</div>
+      <button class="btn-withdraw-confirm" style="margin-bottom:10px" onclick="confirmBankTransfer()">✅ I HAVE TRANSFERRED — CREDIT MY WALLET</button>
+      <button class="btn-cancel" onclick="closeDeposit()">Cancel</button>
+    </div>
+
+    <!-- FLUTTERWAVE FORM (shown for all methods except Bank Transfer) -->
+    <div id="flutterwaveForm">
+      <div class="form-group">
+        <label class="form-label">Your Name</label>
+        <input class="form-input" id="depName" placeholder="Full name" style="border-color:rgba(74,144,255,0.3)">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Email Address</label>
+        <input class="form-input" id="depEmail" type="email" placeholder="email@example.com" style="border-color:rgba(74,144,255,0.3)">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Phone Number</label>
+        <input class="form-input" id="depPhone" type="tel" placeholder="08012345678" style="border-color:rgba(74,144,255,0.3)">
+      </div>
+      <button class="btn-pay-dynamic method-card" id="payBtn" onclick="initiateDeposit()">⚡ PAY WITH CARD</button>
+      <button class="btn-cancel" onclick="closeDeposit()">Cancel</button>
+      <div class="flw-badge">🔒 Naira Spin Wheel payments secured by <strong style="color:#F5A623">Flutterwave</strong> — Cards, Bank Transfer, USSD, OPay & more</div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ===== WITHDRAW MODAL ===== -->
+<div class="overlay" id="withdrawOverlay">
+  <div class="modal-card">
+    <div class="modal-title green">🏦 Withdraw to Bank</div>
+    <div class="withdraw-amount-display" id="withdrawAmountDisplay">₦0.00</div>
+    <div class="form-group">
+      <label class="form-label">Bank Name</label>
+      <select class="form-select" id="bankSelect">
+        <option value="">— Select your bank —</option>
+        <option>Access Bank</option><option>GTBank</option><option>First Bank of Nigeria</option>
+        <option>Zenith Bank</option><option>UBA</option><option>Fidelity Bank</option>
+        <option>Union Bank</option><option>Sterling Bank</option><option>Stanbic IBTC</option>
+        <option>FCMB</option><option>Ecobank Nigeria</option><option>Keystone Bank</option>
+        <option>Polaris Bank</option><option>Wema Bank</option><option>Heritage Bank</option>
+        <option>Opay</option><option>Kuda Bank</option><option>PalmPay</option><option>Moniepoint</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Account Number (NUBAN)</label>
+      <input class="form-input" type="text" id="acctNum" placeholder="10-digit account number" maxlength="10" oninput="this.value=this.value.replace(/\D/g,'')">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Account Name</label>
+      <input class="form-input" type="text" id="acctName" placeholder="Full name on account">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Phone Number <span style="color:var(--green);font-size:.68rem;">(SMS alerts)</span></label>
+      <input class="form-input" type="tel" id="withdrawPhone" placeholder="08012345678 — for SMS alert" maxlength="11" oninput="this.value=this.value.replace(/\D/g,'')">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Withdrawal Amount (₦)</label>
+      <input class="form-input" type="number" id="withdrawAmt" placeholder="Amount to withdraw" min="100">
+    </div>
+    <button class="btn-withdraw-confirm" onclick="confirmWithdraw()">✅ CONFIRM WITHDRAWAL</button>
+    <button class="btn-cancel" onclick="closeWithdraw()">Cancel</button>
+    <div class="flw-badge">🔒 Naira Spin Wheel withdrawals powered by <strong style="color:#F5A623">Flutterwave</strong> Transfers</div>
+  </div>
+</div>
+
+<!-- ===== DAILY BONUS MODAL ===== -->
+<div class="overlay" id="bonusOverlay">
+  <div class="bonus-modal-card">
+    <div class="bonus-modal-icon">🎁</div>
+    <div class="bonus-modal-title">FREE BONUS!</div>
+    <div style="margin:10px 0 4px;color:var(--muted);font-size:.8rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;">Total Claims</div>
+    <div class="bonus-streak" id="bonusStreak"></div>
+    <div class="bonus-modal-amount" id="bonusModalAmt">₦500</div>
+    <div class="bonus-modal-sub" id="bonusModalSub">Claim your free ₦500 bonus now! Next one in 5 minutes.</div>
+    <button class="btn-collect" onclick="claimBonus()">🎉 COLLECT ₦500</button>
+  </div>
+</div>
+
+<!-- ===== PENDING DEPOSIT MODAL ===== -->
+<div class="overlay" id="pendingOverlay">
+  <div class="pending-card">
+    <div class="pending-icon">⏳</div>
+    <div class="pending-title">Complete Your Payment</div>
+    <div class="pending-sub">A Flutterwave payment page has opened in a new tab. Complete your payment there, then click the button below to credit your wallet.</div>
+    <div class="pending-info-box">
+      <div class="pending-row">
+        <span class="pending-row-label">Amount</span>
+        <span class="pending-row-val" id="pendingAmt">₦0</span>
+      </div>
+      <div class="pending-row">
+        <span class="pending-row-label">Method</span>
+        <span class="pending-row-val" id="pendingMethod">—</span>
+      </div>
+      <div class="pending-row">
+        <span class="pending-row-label">Reference</span>
+        <span class="pending-row-val" id="pendingRef" style="font-size:.68rem">—</span>
+      </div>
+    </div>
+    <div class="pending-warning">⚠️ Only click "I Have Paid" after your Flutterwave payment shows <strong>Successful</strong>. Do not click if payment failed or was cancelled.</div>
+    <button class="btn-confirm-paid" onclick="confirmManualDeposit()">✅ I HAVE PAID — CREDIT MY WALLET</button>
+    <button class="btn-cancel" onclick="document.getElementById('pendingOverlay').classList.remove('show')">Cancel — I didn't pay</button>
+  </div>
+</div>
+
+<!-- ===== FALLBACK LINK MODAL ===== -->
+<div class="overlay" id="fallbackOverlay">
+  <div class="fallback-card">
+    <div style="font-size:2.5rem;margin-bottom:10px">🔗</div>
+    <div class="pending-title" style="color:var(--gold)">Open Payment Link</div>
+    <div class="pending-sub">Your browser blocked the payment popup. Tap the button below to open Flutterwave in a new tab, then come back and click "I Have Paid".</div>
+    <div class="pending-info-box" style="margin-bottom:12px">
+      <div class="pending-row"><span class="pending-row-label">Amount</span><span class="pending-row-val" id="fallbackAmt">₦0</span></div>
+      <div class="pending-row"><span class="pending-row-label">Reference</span><span class="pending-row-val" id="fallbackRef" style="font-size:.68rem">—</span></div>
+    </div>
+    <a class="btn-open-link" id="fallbackLink" href="#" target="_blank" rel="noopener noreferrer"
+       onclick="setTimeout(function(){ document.getElementById('fallbackOverlay').classList.remove('show'); document.getElementById('pendingOverlay').classList.add('show'); }, 600)">
+      ⚡ OPEN FLUTTERWAVE PAYMENT
+    </a>
+    <button class="btn-cancel" onclick="document.getElementById('fallbackOverlay').classList.remove('show')">Cancel</button>
+  </div>
+</div>
+
+<!-- ===== WITHDRAWAL SUCCESS MODAL ===== -->
+<div class="overlay" id="wSuccessOverlay">
+  <div class="w-success-card">
+    <div class="w-success-icon">✅</div>
+    <div class="w-success-title">WITHDRAWAL SENT!</div>
+    <div class="w-success-sub">Your money is on its way. Arrives within 1–5 minutes.</div>
+
+    <!-- Transaction summary grid -->
+    <div class="w-info-grid">
+      <div class="w-info-cell"><div class="w-info-label">Amount</div><div class="w-info-val" id="ws-amount">—</div></div>
+      <div class="w-info-cell"><div class="w-info-label">Bank</div><div class="w-info-val" id="ws-bank">—</div></div>
+      <div class="w-info-cell"><div class="w-info-label">Account</div><div class="w-info-val" id="ws-acct">—</div></div>
+      <div class="w-info-cell"><div class="w-info-label">Reference</div><div class="w-info-val" id="ws-ref" style="font-size:.68rem">—</div></div>
+      <div class="w-info-cell"><div class="w-info-label">Status</div><div class="w-info-val"><span class="w-status-badge w-status-sent">● Sent</span></div></div>
+      <div class="w-info-cell"><div class="w-info-label">Time</div><div class="w-info-val" id="ws-time">—</div></div>
+    </div>
+
+    <!-- SMS Alert Preview -->
+    <div class="sms-alert-box">
+      <div class="sms-alert-title">📱 SMS Alert Sent to <span id="ws-phone-display" style="color:var(--text);font-family:'Space Mono',monospace;font-size:.85rem">—</span></div>
+      <div class="sms-bubble">
+        <div class="sms-header">
+          <span class="sms-from">NAIRASPINWHEEL</span>
+          <span class="sms-timestamp" id="ws-sms-time">Just now</span>
+        </div>
+        <div class="sms-text" id="ws-sms-body">—</div>
+      </div>
+    </div>
+
+    <!-- Processing SMS Preview -->
+    <div class="sms-alert-box" style="border-color:rgba(244,196,48,0.3);background:rgba(244,196,48,0.04);">
+      <div class="sms-alert-title" style="color:var(--gold)">📱 Earlier SMS — Processing Alert</div>
+      <div class="sms-bubble" style="border-color:rgba(244,196,48,0.2);">
+        <div class="sms-header">
+          <span class="sms-from" style="color:var(--gold)">NAIRASPINWHEEL</span>
+          <span class="sms-timestamp" id="ws-sms-time2">—</span>
+        </div>
+        <div class="sms-text" id="ws-sms-body2">—</div>
+      </div>
+    </div>
+
+    <button class="btn-again" style="width:100%;margin-top:6px" onclick="document.getElementById('wSuccessOverlay').classList.remove('show')">Close</button>
+  </div>
+</div>
+
+<!-- ===== SHARE MODAL ===== -->
+<div class="overlay" id="shareOverlay">
+  <div class="share-modal-card">
+    <div class="share-modal-title">🚀 SHARE & INVITE</div>
+    <div class="share-modal-sub" id="shareModalSub">Invite friends to Naira Spin Wheel and win together!</div>
+
+    <!-- Share Preview Card -->
+    <div class="share-preview">
+      <div class="share-preview-emoji" id="shareEmoji">🎰</div>
+      <div class="share-preview-logo">Naira <span>Spin Wheel</span></div>
+      <div class="share-preview-msg" id="shareMsg">I just spun the wheel on Naira Spin Wheel!</div>
+      <div class="share-preview-amt" id="shareAmtPreview" style="display:none"></div>
+      <div class="share-preview-tag">🇳🇬 Spin. Win. Withdraw to your Nigerian bank instantly.</div>
+    </div>
+
+    <!-- Platform Buttons -->
+    <div class="share-platforms">
+      <a class="share-platform-btn" id="shareWhatsapp" href="#" target="_blank" rel="noopener" style="--current-color:#25D366" onclick="trackShare('WhatsApp')">
+        <span class="share-platform-icon">💬</span>
+        <span class="share-platform-name">WhatsApp</span>
+      </a>
+      <a class="share-platform-btn" id="shareTelegram" href="#" target="_blank" rel="noopener" style="--current-color:#0088cc" onclick="trackShare('Telegram')">
+        <span class="share-platform-icon">✈️</span>
+        <span class="share-platform-name">Telegram</span>
+      </a>
+      <a class="share-platform-btn" id="shareTwitter" href="#" target="_blank" rel="noopener" style="--current-color:#1DA1F2" onclick="trackShare('Twitter/X')">
+        <span class="share-platform-icon">🐦</span>
+        <span class="share-platform-name">Twitter / X</span>
+      </a>
+      <a class="share-platform-btn" id="shareFacebook" href="#" target="_blank" rel="noopener" style="--current-color:#1877F2" onclick="trackShare('Facebook')">
+        <span class="share-platform-icon">📘</span>
+        <span class="share-platform-name">Facebook</span>
+      </a>
+      <a class="share-platform-btn" id="shareSMS" href="#" style="--current-color:#00C853" onclick="trackShare('SMS')">
+        <span class="share-platform-icon">📱</span>
+        <span class="share-platform-name">SMS</span>
+      </a>
+      <button class="share-platform-btn" style="--current-color:var(--gold)" onclick="nativeShare()">
+        <span class="share-platform-icon">⚡</span>
+        <span class="share-platform-name">More...</span>
+      </button>
+    </div>
+
+    <!-- Copy link -->
+    <div class="share-link-row">
+      <span class="share-link-text" id="shareLinkText">https://nairaspinwheel.com</span>
+      <button class="share-copy-link-btn" onclick="copyShareLink()">📋 Copy Link</button>
+    </div>
+
+    <button class="btn-cancel" onclick="document.getElementById('shareOverlay').classList.remove('show')">Close</button>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="success-toast" id="successToast"></div>
+
+<script>
+// ===== CONFIG =====
+const FLW_PUBLIC_KEY = 'FLWPUBK-ae05ff3a19727ac119a4e8ca64c248a2-X';
+
+// ===== WHEEL SEGMENTS =====
+const segments = [
+  {label:'₦5',    value:5,     color:'#2D2D4A', chance:14},
+  {label:'₦20',   value:20,    color:'#3A1A1A', chance:12},
+  {label:'₦50',   value:50,    color:'#1A3A1A', chance:11},
+  {label:'₦100',  value:100,   color:'#8B1A1A', chance:10},
+  {label:'₦200',  value:200,   color:'#1A4A4A', chance:9},
+  {label:'₦500',  value:500,   color:'#4A2A0A', chance:8},
+  {label:'₦1K',   value:1000,  color:'#1A1A5A', chance:8},
+  {label:'₦2K',   value:2000,  color:'#3A0A4A', chance:7},
+  {label:'₦3K',   value:3000,  color:'#0A3A2A', chance:6},
+  {label:'₦5K',   value:5000,  color:'#5A3A00', chance:5},
+  {label:'₦8K',   value:8000,  color:'#2A0A4A', chance:4},
+  {label:'₦10K',  value:10000, color:'#4A1A00', chance:3},
+  {label:'₦15K',  value:15000, color:'#003A4A', chance:2},
+  {label:'₦20K',  value:20000, color:'#4A3A00', chance:1},
+];
+const segAccent = ['#8080FF','#FF8080','#80FF80','#FF6060','#60FFFF','#FFB060','#6080FF','#CF60FF','#60FFC0','#FFCF40','#B060FF','#FF8040','#40C8FF','#FFD700'];
+
+let pool = [];
+segments.forEach((s,i) => { for(let j=0;j<s.chance;j++) pool.push(i); });
+const totalChance = segments.reduce((a,b)=>a+b.chance,0);
+
+// ===== STATE =====
+let wallet = 0;
+let totalWinnings = 0;
+let spinCount = 0;
+let winCountVal = 0;
+let netPnl = 0;
+let spinning = false;
+let currentAngle = 0;
+let lastWin = 0;
+let currentBet = 1000;
+let depositAmount = 0;
+let withdrawFromResult = false;
+
+// ===== 5-MINUTE BONUS STATE =====
+const BONUS_AMOUNT   = 500;          // fixed ₦500 every claim
+const BONUS_INTERVAL = 5 * 60 * 1000; // 5 minutes in ms
+
+let bonusState = {
+  lastClaimed: null,  // timestamp (ms)
+  streak: 0,
+  claimed: false,
+};
+
+function loadBonusState() {
+  try {
+    const s = localStorage.getItem('nw_bonus');
+    if (s) bonusState = JSON.parse(s);
+  } catch(e) {}
+  checkBonusAvailability();
+}
+
+function saveBonusState() {
+  localStorage.setItem('nw_bonus', JSON.stringify(bonusState));
+}
+
+function msUntilNextBonus() {
+  if (!bonusState.lastClaimed) return 0;
+  const elapsed = Date.now() - bonusState.lastClaimed;
+  return Math.max(0, BONUS_INTERVAL - elapsed);
+}
+
+function checkBonusAvailability() {
+  bonusState.claimed = msUntilNextBonus() > 0;
+  updateBonusBanner();
+}
+
+function getBonusAmount() {
+  return BONUS_AMOUNT;
+}
+
+function updateBonusBanner() {
+  document.getElementById('bonusAmtDisplay').textContent = '₦' + BONUS_AMOUNT.toLocaleString();
+
+  if (bonusState.claimed) {
+    document.getElementById('btnClaim').disabled = true;
+    document.getElementById('btnClaim').textContent = '⏳ WAIT...';
+    document.getElementById('bonusCountdown').style.display = 'block';
+    document.getElementById('bonusSubText').textContent = 'Next ₦500 bonus coming soon!';
+    startCountdown();
+  } else {
+    document.getElementById('btnClaim').disabled = false;
+    document.getElementById('btnClaim').textContent = 'CLAIM NOW 🎉';
+    document.getElementById('bonusCountdown').style.display = 'none';
+    document.getElementById('bonusSubText').textContent = '₦500 free bonus — claim every 5 minutes!';
+  }
+
+  document.getElementById('streakDisplay').textContent = '🎁 ' + bonusState.streak;
+}
+
+let _countdownInterval = null;
+function startCountdown() {
+  if (_countdownInterval) clearInterval(_countdownInterval);
+  function tick() {
+    const ms = msUntilNextBonus();
+    if (ms <= 0) {
+      clearInterval(_countdownInterval);
+      bonusState.claimed = false;
+      updateBonusBanner();
+      // Auto-show bonus modal when timer expires
+      openBonusModal();
+      return;
+    }
+    const totalSec = Math.ceil(ms / 1000);
+    const m = Math.floor(totalSec / 60).toString().padStart(2, '0');
+    const s = (totalSec % 60).toString().padStart(2, '0');
+    const el = document.getElementById('countdownTimer');
+    if (el) el.textContent = m + ':' + s;
+  }
+  tick();
+  _countdownInterval = setInterval(tick, 1000);
+}
+
+function openBonusModal() {
+  if (bonusState.claimed) return;
+  document.getElementById('bonusModalAmt').textContent = '₦' + BONUS_AMOUNT.toLocaleString();
+  document.getElementById('bonusModalSub').textContent = 'Claim your free ₦500 bonus now! Next one in 5 minutes.';
+  buildStreakUI();
+  document.getElementById('bonusOverlay').classList.add('show');
+}
+
+function buildStreakUI() {
+  // Show last 7 claims as streak dots
+  const el = document.getElementById('bonusStreak');
+  const total = Math.min(bonusState.streak, 7);
+  el.innerHTML = Array.from({length: 7}, (_, i) => {
+    const cls = i < total ? 'done' : (i === total ? 'today' : '');
+    return `<div class="streak-day ${cls}" title="Claim ${i+1}">×${i+1}</div>`;
+  }).join('');
+}
+
+function claimBonus() {
+  wallet += BONUS_AMOUNT;
+  bonusState.streak += 1;
+  bonusState.lastClaimed = Date.now();
+  bonusState.claimed = true;
+  saveBonusState();
+  updateWallet();
+  recordTxn('bonus', BONUS_AMOUNT, 'credit', { desc: 'Free Bonus Reward', streak: bonusState.streak });
+  updateBonusBanner();
+  document.getElementById('bonusOverlay').classList.remove('show');
+  fireConfetti();
+  showToast('🎁 ₦500 bonus added to wallet! Next in 5 minutes.', true);
+}
+
+// ===== CANVAS =====
+const canvas = document.getElementById('wheel');
+const ctx = canvas.getContext('2d');
+const CX = canvas.width/2, CY = canvas.height/2, R = CX-8;
+
+function drawWheel(rotation) {
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  let cumAngle = rotation;
+  segments.forEach((seg,i) => {
+    const sliceAngle = (seg.chance/totalChance)*2*Math.PI;
+    const start = cumAngle, end = cumAngle+sliceAngle, mid = cumAngle+sliceAngle/2;
+    ctx.beginPath(); ctx.moveTo(CX,CY); ctx.arc(CX,CY,R,start,end); ctx.closePath();
+    ctx.fillStyle = seg.color; ctx.fill();
+    const grad = ctx.createRadialGradient(CX,CY,0,CX,CY,R);
+    grad.addColorStop(0,'rgba(255,255,255,0.06)'); grad.addColorStop(1,'rgba(0,0,0,0.12)');
+    ctx.fillStyle = grad; ctx.fill();
+    ctx.strokeStyle='rgba(255,255,255,0.08)'; ctx.lineWidth=1.5; ctx.stroke();
+    ctx.beginPath(); ctx.arc(CX,CY,R-6,start+0.02,end-0.02);
+    ctx.strokeStyle=segAccent[i]+'55'; ctx.lineWidth=4; ctx.stroke();
+    ctx.save(); ctx.translate(CX,CY); ctx.rotate(mid);
+    ctx.translate(R*0.68,0); ctx.rotate(Math.PI/2);
+    ctx.fillStyle=segAccent[i];
+    ctx.font=`bold ${seg.value>=10000?11:13}px 'Space Mono',monospace`;
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.shadowColor=segAccent[i]; ctx.shadowBlur=8;
+    ctx.fillText(seg.label,0,0); ctx.restore();
+    cumAngle = end;
+  });
+  ctx.beginPath(); ctx.arc(CX,CY,R,0,Math.PI*2);
+  ctx.strokeStyle='rgba(244,196,48,0.4)'; ctx.lineWidth=3; ctx.stroke();
+  ctx.beginPath(); ctx.arc(CX,CY,R+3,0,Math.PI*2);
+  ctx.strokeStyle='rgba(244,196,48,0.12)'; ctx.lineWidth=2; ctx.stroke();
+}
+
+// ===== ODDS TABLE =====
+function buildOddsTable() {
+  document.getElementById('oddsTable').innerHTML = segments.map((s,i) => `
+    <div class="odds-row">
+      <div class="odds-color" style="background:${segAccent[i]}"></div>
+      <div class="odds-name">${s.label}</div>
+      <div class="odds-chance">${((s.chance/totalChance)*100).toFixed(1)}%</div>
+    </div>`).join('');
+}
+
+// ===== BET =====
+function setBet(amount) {
+  currentBet = amount;
+  document.getElementById('betDisplay').textContent = '₦'+amount.toLocaleString();
+  document.querySelectorAll('.bet-btn').forEach(b => {
+    const v = parseInt(b.textContent.replace('₦','').replace(/,/g,''));
+    b.classList.toggle('active', v===amount);
+  });
+}
+
+function applyCustom() {
+  const v = parseInt(document.getElementById('customAmt').value);
+  if (!v||v<50) return showToast('Minimum stake is ₦50',false);
+  currentBet = v;
+  document.getElementById('betDisplay').textContent = '₦'+v.toLocaleString();
+  document.querySelectorAll('.bet-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('customAmt').value='';
+  showToast(`Stake set to ₦${v.toLocaleString()}`,true);
+}
+
+// ===== SPIN =====
+function spinWheel() {
+  if (spinning) return;
+  if (wallet < currentBet) {
+    showToast('Insufficient balance! Minimum stake is ₦50.', false);
+    return;
+  }
+  spinning=true; wallet-=currentBet; netPnl-=currentBet; spinCount++;
+  updateWallet(); document.getElementById('spinBtn').disabled=true;
+
+  const picked = pool[Math.floor(Math.random()*pool.length)];
+  let segStart=0, segAngles=[];
+  segments.forEach(s => {
+    const a=(s.chance/totalChance)*2*Math.PI;
+    segAngles.push({start:segStart,angle:a}); segStart+=a;
+  });
+  const tSeg=segAngles[picked];
+  const targetMid=tSeg.start+tSeg.angle/2;
+  const spins=6+Math.floor(Math.random()*4);
+  const pointer=-Math.PI/2;
+  let needed=pointer-targetMid;
+  while(needed<0) needed+=2*Math.PI;
+  const finalAngle=needed+spins*2*Math.PI;
+  const duration=4000+Math.random()*1500;
+  const startAngle=currentAngle, endAngle=startAngle+finalAngle;
+  const startTime=performance.now();
+
+  function easeOut(t){return 1-Math.pow(1-t,4);}
+  function animate(now) {
+    const progress=Math.min((now-startTime)/duration,1);
+    currentAngle=startAngle+(endAngle-startAngle)*easeOut(progress);
+    drawWheel(currentAngle);
+    if(progress<1){requestAnimationFrame(animate);}
+    else{
+      currentAngle=endAngle%(2*Math.PI);
+      drawWheel(currentAngle);
+      spinning=false;
+      document.getElementById('spinBtn').disabled=false;
+      showResult(segments[picked]);
+    }
+  }
+  requestAnimationFrame(animate);
+}
+
+// ===== RESULT =====
+function showResult(seg) {
+  lastWin=seg.value; wallet+=seg.value; totalWinnings+=seg.value;
+  netPnl+=seg.value; winCountVal++; updateWallet();
+  addHistory(currentBet,seg.value);
+  const isGoodWin=seg.value>=currentBet;
+  document.getElementById('resultEmoji').textContent=isGoodWin?'🎉':'😅';
+  document.getElementById('resultTitle').textContent=isGoodWin?'YOU WIN!':'Better Luck!';
+  document.getElementById('resultTitle').className='result-title '+(isGoodWin?'win':'lose');
+  document.getElementById('resultAmount').textContent='+ ₦'+seg.value.toLocaleString();
+  document.getElementById('resultSub').textContent=isGoodWin
+    ?`You won ₦${seg.value.toLocaleString()}! Withdraw to any Nigerian bank instantly.`
+    :`You landed ₦${seg.value.toLocaleString()}. Spin again for a bigger win!`;
+  document.getElementById('withdrawResBtn').style.display=isGoodWin?'block':'none';
+  document.getElementById('shareResultBtn').style.display=isGoodWin?'block':'none';
+  document.getElementById('resultOverlay').classList.add('show');
+  if(isGoodWin) fireConfetti();
+}
+
+function closeResult(){document.getElementById('resultOverlay').classList.remove('show');}
+
+// ===== DEPOSIT (Flutterwave) =====
+function setDepositAmt(n) {
+  document.getElementById('depAmount').value=n;
+  document.querySelectorAll('.preset-btn').forEach(b=>{
+    b.classList.toggle('active',parseInt(b.textContent.replace('₦','').replace('K','000').replace(/,/g,''))*1===n);
+  });
+}
+
+// ===== DEPOSIT PAYMENT METHOD =====
+let selectedPayMethod = 'card';
+
+const PAY_METHOD_META = {
+  'card':                                          { label:'Card',          btnClass:'method-card',         btnText:'💳 PAY WITH DEBIT/CREDIT CARD' },
+  'account':                                       { label:'Bank Transfer', btnClass:'method-banktransfer',  btnText:'🏦 PAY WITH BANK TRANSFER' },
+  'ussd':                                          { label:'USSD',          btnClass:'method-ussd',          btnText:'📱 PAY WITH USSD (*737# *901#)' },
+  'opay':                                          { label:'OPay',          btnClass:'method-opay',          btnText:'🟠 PAY WITH OPAY' },
+  'palmpay':                                       { label:'PalmPay',       btnClass:'method-palmpay',       btnText:'🟢 PAY WITH PALMPAY' },
+  'card,account,ussd,opay,palmpay':               { label:'All Methods',   btnClass:'method-card',          btnText:'⚡ CHOOSE PAYMENT METHOD' },
+};
+
+function selectPayMethod(method, el) {
+  selectedPayMethod = method;
+  document.querySelectorAll('.pay-method-btn').forEach(b => b.classList.remove('selected'));
+  el.classList.add('selected');
+  const meta = PAY_METHOD_META[method] || PAY_METHOD_META['card'];
+  const btn  = document.getElementById('payBtn');
+  if (btn) { btn.textContent = meta.btnText; btn.className = 'btn-pay-dynamic ' + meta.btnClass; }
+
+  // Toggle bank transfer panel vs Flutterwave form
+  const isBankTransfer = method === 'account';
+  document.getElementById('bankTransferPanel').classList.toggle('show', isBankTransfer);
+  document.getElementById('flutterwaveForm').style.display = isBankTransfer ? 'none' : 'block';
+
+  if (isBankTransfer) generateTransferRef();
+}
+
+function generateTransferRef() {
+  const ref = 'NSW-' + Date.now().toString().slice(-7);
+  const el  = document.getElementById('transferRef');
+  if (el) { el.textContent = ref; el.dataset.ref = ref; }
+}
+
+function onAmountChange() {
+  const amt = parseInt(document.getElementById('depAmount').value) || 0;
+  const display = document.getElementById('transferAmtDisplay');
+  if (display) display.textContent = '₦' + amt.toLocaleString('en-NG');
+}
+
+function copyText(text) {
+  if (!text || text === '—') return;
+  navigator.clipboard.writeText(text).then(() => {
+    showToast('📋 Copied: ' + text, true);
+  }).catch(() => {
+    // Fallback for older browsers
+    const ta = document.createElement('textarea');
+    ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    showToast('📋 Copied: ' + text, true);
+  });
+}
+
+function confirmBankTransfer() {
+  const amt = parseInt(document.getElementById('depAmount').value);
+  if (!amt || amt < 100) return showToast('Please enter the amount you transferred', false);
+  const ref = document.getElementById('transferRef').dataset.ref || document.getElementById('transferRef').textContent;
+  depositAmount = amt;
+  wallet += amt;
+  updateWallet();
+  recordTxn('deposit', amt, 'credit', { ref, desc: 'Wallet Deposit via Bank Transfer' });
+  fireConfetti();
+  closeDeposit();
+  showToast('✅ ₦' + amt.toLocaleString() + ' credited after bank transfer!', true);
+}
+
+function openDepositModal() {
+  // Reset to card view on open
+  selectedPayMethod = 'card';
+  document.querySelectorAll('.pay-method-btn').forEach((b,i) => b.classList.toggle('selected', i === 0));
+  document.getElementById('bankTransferPanel').classList.remove('show');
+  document.getElementById('flutterwaveForm').style.display = 'block';
+  const btn = document.getElementById('payBtn');
+  if (btn) { btn.textContent = '💳 PAY WITH CARD'; btn.className = 'btn-pay-dynamic method-card'; }
+  generateTransferRef();
+  document.getElementById('depositOverlay').classList.add('show');
+}
+function closeDeposit() {
+  document.getElementById('depositOverlay').classList.remove('show');
+}
+
+function initiateDeposit() {
+  // Bank Transfer is handled inline by confirmBankTransfer()
+  if (selectedPayMethod === 'account') { confirmBankTransfer(); return; }
+
+  const name  = document.getElementById('depName').value.trim();
+  const email = document.getElementById('depEmail').value.trim();
+  const phone = document.getElementById('depPhone').value.trim();
+  const amt   = parseInt(document.getElementById('depAmount').value);
+
+  if (!name)  return showToast('Please enter your name', false);
+  if (!email || !email.includes('@')) return showToast('Enter a valid email address', false);
+  if (!phone || phone.length < 10)   return showToast('Enter a valid phone number', false);
+  if (!amt   || amt < 100)           return showToast('Minimum deposit is ₦100', false);
+
+  depositAmount = amt;
+  const txRef       = 'NSW-' + Date.now() + '-' + Math.floor(Math.random() * 10000);
+  const methodLabel = (PAY_METHOD_META[selectedPayMethod] || {}).label || 'Card';
+
+  // Build Flutterwave hosted checkout URL — no SDK needed, works everywhere
+  const flwURL = 'https://checkout.flutterwave.com/v3/hosted/pay?' + new URLSearchParams({
+    public_key:               FLW_PUBLIC_KEY,
+    tx_ref:                   txRef,
+    amount:                   amt,
+    currency:                 'NGN',
+    payment_options:          selectedPayMethod,
+    customer_email:           email,
+    customer_phone_number:    phone,
+    customer_name:            name,
+    customization_title:      'Naira Spin Wheel',
+    customization_description:'Deposit via ' + methodLabel,
+    redirect_url:             window.location.href,
+  }).toString();
+
+  closeDeposit();
+
+  // Persist pending txn to localStorage — survives page navigation
+  const pendingTxn = { amt, txRef, methodLabel };
+  try { localStorage.setItem('nw_pending_txn', JSON.stringify(pendingTxn)); } catch(e) {}
+
+  // Navigate to Flutterwave in the same browser tab
+  window.location.href = flwURL;
+}
+
+function showPendingDeposit(amt, txRef, methodLabel) {
+  document.getElementById('pendingAmt').textContent    = '₦' + amt.toLocaleString('en-NG');
+  document.getElementById('pendingRef').textContent    = txRef;
+  document.getElementById('pendingMethod').textContent = methodLabel;
+  document.getElementById('pendingOverlay').classList.add('show');
+}
+
+function confirmManualDeposit() {
+  let p = null;
+  try { p = JSON.parse(localStorage.getItem('nw_pending_txn')); } catch(e) {}
+  if (!p) p = window._pendingTxn || {};
+  const amt         = p.amt         || depositAmount;
+  const txRef       = p.txRef       || document.getElementById('pendingRef').textContent;
+  const methodLabel = p.methodLabel || document.getElementById('pendingMethod').textContent;
+  wallet += amt;
+  updateWallet();
+  recordTxn('deposit', amt, 'credit', { ref: txRef, desc: 'Wallet Deposit via ' + methodLabel });
+  fireConfetti();
+  try { localStorage.removeItem('nw_pending_txn'); } catch(e) {}
+  window._pendingTxn = null;
+  document.getElementById('pendingOverlay').classList.remove('show');
+  showToast('✅ ₦' + amt.toLocaleString() + ' credited to your wallet!', true);
+}
+
+// ===== WITHDRAW =====
+function openWithdrawModal(fromResult=false) {
+  withdrawFromResult = fromResult;
+  if(fromResult) closeResult();
+  document.getElementById('withdrawAmountDisplay').textContent = '₦'+wallet.toLocaleString('en-NG',{minimumFractionDigits:2});
+  document.getElementById('withdrawAmt').value = fromResult ? lastWin : '';
+  document.getElementById('withdrawOverlay').classList.add('show');
+}
+function closeWithdraw(){document.getElementById('withdrawOverlay').classList.remove('show');}
+
+function maskPhone(phone) {
+  if (!phone || phone.length < 7) return phone;
+  return phone.slice(0,4) + '****' + phone.slice(-3);
+}
+function maskAcct(acct) {
+  if (!acct || acct.length < 6) return acct;
+  return '******' + acct.slice(-4);
+}
+
+function confirmWithdraw() {
+  const bank  = document.getElementById('bankSelect').value;
+  const acct  = document.getElementById('acctNum').value;
+  const name  = document.getElementById('acctName').value.trim();
+  const phone = document.getElementById('withdrawPhone').value.trim();
+  const amt   = parseInt(document.getElementById('withdrawAmt').value);
+
+  if (!bank)              return showToast('Please select your bank', false);
+  if (acct.length !== 10) return showToast('Enter a valid 10-digit account number', false);
+  if (!name)              return showToast('Enter your account name', false);
+  if (!phone || phone.length < 10) return showToast('Enter your phone number for SMS alert', false);
+  if (!amt || amt < 100)  return showToast('Minimum withdrawal is ₦100', false);
+  if (amt > wallet)       return showToast('Amount exceeds wallet balance', false);
+
+  wallet -= amt;
+  updateWallet();
+  closeWithdraw();
+
+  const txRef = 'WDR-' + Date.now().toString().slice(-8);
+  const now   = new Date();
+  const timeStr = now.toLocaleTimeString('en-NG', {hour:'2-digit', minute:'2-digit', second:'2-digit'});
+  const dateStr = now.toLocaleDateString('en-NG', {day:'2-digit', month:'short', year:'numeric'});
+  const processingTime = now.toLocaleTimeString('en-NG', {hour:'2-digit', minute:'2-digit'});
+
+  // Record in transaction history with processing status
+  recordTxn('withdraw', amt, 'debit', {
+    ref: txRef,
+    bank,
+    acct,
+    desc: 'Withdrawal to ' + bank,
+    status: 'processing',
+  });
+
+  // SMS 1 — Processing alert (shown immediately)
+  showToast('📱 SMS sent: Withdrawal of ₦' + amt.toLocaleString() + ' is being processed...', true);
+
+  // After 3s — update status to sent and show success modal
+  setTimeout(() => {
+    // Update transaction status to sent in history
+    const txn = transactions.find(t => t.ref === txRef);
+    if (txn) { txn.status = 'sent'; txn.statusLabel = 'Sent'; saveTransactions(); renderTxnTable(); }
+
+    // Build SMS preview texts
+    const smsProcessing = `Dear ${name.split(' ')[0]}, your withdrawal request of ₦${amt.toLocaleString()} to ${bank} Acct ${maskAcct(acct)} is being processed. Ref: ${txRef}. Time: ${processingTime}. - Naira Spin Wheel`;
+    const smsConfirmed  = `Dear ${name.split(' ')[0]}, ₦${amt.toLocaleString()} has been sent to your ${bank} account ${maskAcct(acct)}. Ref: ${txRef}. Time: ${timeStr}. Arrives within 5mins. - Naira Spin Wheel`;
+
+    // Populate success modal
+    document.getElementById('ws-amount').textContent  = '₦' + amt.toLocaleString('en-NG');
+    document.getElementById('ws-bank').textContent    = bank;
+    document.getElementById('ws-acct').textContent    = maskAcct(acct);
+    document.getElementById('ws-ref').textContent     = txRef;
+    document.getElementById('ws-time').textContent    = timeStr;
+    document.getElementById('ws-phone-display').textContent = maskPhone(phone);
+    document.getElementById('ws-sms-time').textContent  = timeStr;
+    document.getElementById('ws-sms-time2').textContent  = processingTime;
+    document.getElementById('ws-sms-body').innerHTML  = formatSmsText(smsConfirmed);
+    document.getElementById('ws-sms-body2').innerHTML = formatSmsText(smsProcessing);
+
+    document.getElementById('wSuccessOverlay').classList.add('show');
+    fireConfetti();
+    showToast('✅ ₦' + amt.toLocaleString() + ' sent to ' + bank + ' — ' + maskAcct(acct), true);
+  }, 3000);
+
+  // Reset form
+  ['bankSelect','acctNum','acctName','withdrawPhone','withdrawAmt'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+}
+
+function formatSmsText(text) {
+  // Highlight amounts, references, bank names
+  return text
+    .replace(/(₦[\d,]+)/g, '<span class="sms-highlight">$1</span>')
+    .replace(/(Ref:\s*[A-Z0-9-]+)/g, '<span class="sms-ref">$1</span>');
+}
+
+// ===== SHARE =====
+const SHARE_URL = window.location.href || 'https://nairaspinwheel.com';
+
+function openShareModal(fromWin = false) {
+  const url  = SHARE_URL;
+  let msg, emoji, showAmt = false, amtText = '';
+
+  if (fromWin && lastWin > 0) {
+    emoji   = '🎉';
+    msg     = `I just won ₦${lastWin.toLocaleString()} on Naira Spin Wheel! 🎰🇳🇬 Spin the wheel and win real Naira — withdraw to any Nigerian bank instantly!`;
+    showAmt = true;
+    amtText = '₦' + lastWin.toLocaleString();
+    closeResult();
+  } else {
+    emoji = '🎰';
+    msg   = `🎰 Play Naira Spin Wheel — Nigeria's #1 spin & win game! Win up to ₦20,000 per spin and withdraw instantly to your bank. Join now!`;
+  }
+
+  const fullMsg = msg + '\n\n👉 ' + url;
+
+  // Update preview
+  document.getElementById('shareEmoji').textContent       = emoji;
+  document.getElementById('shareMsg').textContent         = msg.split('👉')[0].trim();
+  document.getElementById('shareModalSub').textContent    = fromWin
+    ? 'Brag about your win and invite friends!' : 'Invite friends to Naira Spin Wheel!';
+  const amtEl = document.getElementById('shareAmtPreview');
+  amtEl.style.display = showAmt ? 'block' : 'none';
+  if (showAmt) amtEl.textContent = amtText;
+
+  // Update link display
+  document.getElementById('shareLinkText').textContent = url;
+
+  // Build platform URLs
+  const enc = encodeURIComponent(fullMsg);
+  const encUrl = encodeURIComponent(url);
+
+  document.getElementById('shareWhatsapp').href  = 'https://wa.me/?text=' + enc;
+  document.getElementById('shareTelegram').href  = 'https://t.me/share/url?url=' + encUrl + '&text=' + encodeURIComponent(msg);
+  document.getElementById('shareTwitter').href   = 'https://twitter.com/intent/tweet?text=' + enc;
+  document.getElementById('shareFacebook').href  = 'https://www.facebook.com/sharer/sharer.php?u=' + encUrl + '&quote=' + encodeURIComponent(msg);
+  document.getElementById('shareSMS').href       = 'sms:?body=' + enc;
+
+  document.getElementById('shareOverlay').classList.add('show');
+}
+
+function nativeShare() {
+  const url = SHARE_URL;
+  const text = `🎰 Play Naira Spin Wheel — Win up to ₦20,000 per spin & withdraw to any Nigerian bank instantly!`;
+  if (navigator.share) {
+    navigator.share({ title: 'Naira Spin Wheel', text, url })
+      .then(() => trackShare('Native'))
+      .catch(() => {});
+  } else {
+    copyShareLink();
+  }
+}
+
+function copyShareLink() {
+  const url = SHARE_URL;
+  navigator.clipboard.writeText(url).then(() => {
+    showToast('🔗 Game link copied! Share with friends.', true);
+  }).catch(() => {
+    const ta = document.createElement('textarea');
+    ta.value = url; ta.style.position='fixed'; ta.style.opacity='0';
+    document.body.appendChild(ta); ta.select();
+    document.execCommand('copy'); document.body.removeChild(ta);
+    showToast('🔗 Game link copied!', true);
+  });
+}
+
+function trackShare(platform) {
+  showToast('🚀 Shared on ' + platform + '! Thanks for spreading the word 🎉', true);
+  setTimeout(() => document.getElementById('shareOverlay').classList.remove('show'), 400);
+}
+
+// ===== HISTORY =====
+function addHistory(bet,win) {
+  const list=document.getElementById('historyList');
+  const empty=list.querySelector('.empty-history');
+  if(empty) empty.remove();
+  const now=new Date();
+  const time=now.toLocaleTimeString('en-NG',{hour:'2-digit',minute:'2-digit'});
+  const item=document.createElement('div');
+  item.className='history-item';
+  item.innerHTML=`
+    <span class="history-bet">Bet: ₦${bet.toLocaleString()}</span>
+    <span class="history-win ${win>=bet?'profit':'loss'}">+₦${win.toLocaleString()}</span>
+    <span class="history-time">${time}</span>`;
+  list.insertBefore(item,list.firstChild);
+  while(list.children.length>20) list.removeChild(list.lastChild);
+}
+
+// ===== WALLET DISPLAY =====
+function updateWallet() {
+  document.getElementById('walletDisplay').textContent='₦'+wallet.toLocaleString('en-NG',{minimumFractionDigits:2});
+  document.getElementById('winningsDisplay').textContent='₦'+totalWinnings.toLocaleString('en-NG',{minimumFractionDigits:2});
+  document.getElementById('spinCount').textContent=spinCount;
+  document.getElementById('winCount').textContent=winCountVal;
+  const pnl=document.getElementById('netPnl');
+  pnl.textContent=(netPnl>=0?'+':'')+'₦'+Math.abs(netPnl).toLocaleString();
+  pnl.className='stat-value '+(netPnl>=0?'pos':'neg');
+}
+
+// ===== CONFETTI =====
+function fireConfetti() {
+  const colors=['#F4C430','#FFD700','#00C853','#FF6B6B','#60CFFF','#CF60FF'];
+  for(let i=0;i<70;i++) {
+    setTimeout(()=>{
+      const el=document.createElement('div');
+      el.className='confetti-piece';
+      el.style.cssText=`left:${Math.random()*100}vw;top:-10px;background:${colors[Math.floor(Math.random()*colors.length)]};width:${6+Math.random()*10}px;height:${6+Math.random()*10}px;border-radius:${Math.random()>.5?'50%':'2px'};animation-duration:${1.5+Math.random()*2}s;animation-delay:${Math.random()*.5}s;`;
+      document.body.appendChild(el);
+      setTimeout(()=>el.remove(),3200);
+    },i*25);
+  }
+}
+
+// ===== TOAST =====
+function showToast(msg,success) {
+  const t=document.getElementById('successToast');
+  t.textContent=msg;
+  t.style.background=success?'var(--green)':'var(--red)';
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),4000);
+}
+
+// ===== CLOSE OVERLAYS ON BG CLICK =====
+['resultOverlay','depositOverlay','withdrawOverlay','bonusOverlay','pendingOverlay','fallbackOverlay','wSuccessOverlay','shareOverlay'].forEach(id=>{
+  document.getElementById(id).addEventListener('click',function(e){
+    if(e.target===this) this.classList.remove('show');
+  });
+});
+
+// ===== TRANSACTION LEDGER =====
+let transactions = [];   // full ledger
+let txnTab = 'all';
+let txnPage = 1;
+const TXN_PER_PAGE = 10;
+
+function loadTransactions() {
+  try {
+    const s = localStorage.getItem('nw_transactions');
+    if (s) transactions = JSON.parse(s);
+  } catch(e) { transactions = []; }
+}
+
+function saveTransactions() {
+  try { localStorage.setItem('nw_transactions', JSON.stringify(transactions)); } catch(e) {}
+}
+
+/**
+ * Record a transaction into the ledger.
+ * type: 'deposit' | 'withdraw' | 'win' | 'bonus' | 'bet'
+ * amount: positive number
+ * direction: 'credit' | 'debit'
+ * meta: { ref, bank, acct, desc, streak }
+ */
+function recordTxn(type, amount, direction, meta = {}) {
+  const now = new Date();
+  const txn = {
+    id: 'TXN-' + Date.now() + '-' + Math.floor(Math.random() * 9999),
+    type,
+    amount,
+    direction,
+    status: 'success',
+    timestamp: now.toISOString(),
+    date: now.toLocaleDateString('en-NG', { day:'2-digit', month:'short', year:'numeric' }),
+    time: now.toLocaleTimeString('en-NG', { hour:'2-digit', minute:'2-digit', second:'2-digit' }),
+    ref: meta.ref || ('REF' + Math.floor(Math.random()*9000000+1000000)),
+    desc: meta.desc || '',
+    bank: meta.bank || '',
+    acct: meta.acct || '',
+    streak: meta.streak || 0,
+  };
+  transactions.unshift(txn);
+  saveTransactions();
+  renderTxnTable();
+  updateTxnSummary();
+}
+
+function setTxnTab(tab) {
+  txnTab = tab;
+  txnPage = 1;
+  document.querySelectorAll('.txn-tab').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + tab).classList.add('active');
+  renderTxnTable();
+}
+
+function getFilteredTxns() {
+  const q = (document.getElementById('txnSearch')?.value || '').toLowerCase().trim();
+  const sort = document.getElementById('txnSort')?.value || 'newest';
+
+  let list = transactions.filter(t => {
+    if (txnTab !== 'all' && t.type !== txnTab) return false;
+    if (q) {
+      const searchable = [t.ref, t.desc, t.bank, t.acct, String(t.amount), t.type, t.date].join(' ').toLowerCase();
+      if (!searchable.includes(q)) return false;
+    }
+    return true;
+  });
+
+  list.sort((a, b) => {
+    if (sort === 'newest') return new Date(b.timestamp) - new Date(a.timestamp);
+    if (sort === 'oldest') return new Date(a.timestamp) - new Date(b.timestamp);
+    if (sort === 'highest') return b.amount - a.amount;
+    if (sort === 'lowest') return a.amount - b.amount;
+    return 0;
+  });
+  return list;
+}
+
+function renderTxnTable() {
+  const list = getFilteredTxns();
+  const totalPages = Math.max(1, Math.ceil(list.length / TXN_PER_PAGE));
+  if (txnPage > totalPages) txnPage = totalPages;
+
+  const start = (txnPage - 1) * TXN_PER_PAGE;
+  const page = list.slice(start, start + TXN_PER_PAGE);
+
+  const container = document.getElementById('txnList');
+
+  // Update tab counts
+  ['all','deposit','withdraw','win','bonus','bet'].forEach(tab => {
+    const count = tab === 'all' ? transactions.length : transactions.filter(t => t.type === tab).length;
+    const el = document.getElementById('cnt-' + tab);
+    if (el) el.textContent = count;
+  });
+  const totalEl = document.getElementById('txnTotalBadge');
+  if (totalEl) totalEl.textContent = transactions.length + ' record' + (transactions.length !== 1 ? 's' : '');
+
+  if (list.length === 0) {
+    container.innerHTML = `<div class="txn-empty"><div class="txn-empty-icon">${txnTab === 'all' ? '📭' : '🔍'}</div><div class="txn-empty-text">${txnTab === 'all' ? 'No transactions yet.' : 'No ' + txnTab + ' transactions found.'}</div></div>`;
+    document.getElementById('txnPagination').style.display = 'none';
+    return;
+  }
+
+  const typeConfig = {
+    deposit:  { label:'Deposit',    badge:'badge-deposit', icon:'💳', dir:'+' },
+    withdraw: { label:'Withdrawal', badge:'badge-withdraw', icon:'🏦', dir:'-' },
+    win:      { label:'Spin Win',   badge:'badge-win',     icon:'🎰', dir:'+' },
+    bonus:    { label:'Daily Bonus',badge:'badge-bonus',   icon:'🎁', dir:'+' },
+    bet:      { label:'Bet Placed', badge:'badge-bet',     icon:'🎲', dir:'-' },
+  };
+
+  container.innerHTML = page.map(t => {
+    const cfg = typeConfig[t.type] || { label: t.type, badge:'badge-win', icon:'💰', dir:'+' };
+    const amtClass = t.direction === 'credit' ? 'credit' : 'debit';
+    const amtPrefix = t.direction === 'credit' ? '+' : '-';
+    const dotColor = { deposit:'#4A90FF', withdraw:'#00C853', win:'#F4C430', bonus:'#CF60FF', bet:'#FF3D3D' }[t.type] || '#7A7A9A';
+    const descLine2 = t.bank ? `${t.bank}${t.acct ? ' • ' + t.acct.slice(-4).padStart(t.acct.length,'*') : ''}` : (t.streak ? `Day ${t.streak} streak` : t.ref);
+    return `
+    <div class="txn-row">
+      <div class="txn-cell">
+        <div>
+          <div class="txn-desc">${cfg.icon} ${t.desc || cfg.label}<small>${descLine2}</small></div>
+        </div>
+      </div>
+      <div class="txn-cell">
+        <div class="txn-amount ${amtClass}">${amtPrefix}₦${Number(t.amount).toLocaleString('en-NG')}</div>
+      </div>
+      <div class="txn-cell">
+        <div class="txn-type-badge ${cfg.badge}">${cfg.label}</div>
+      </div>
+      <div class="txn-cell">
+        <div style="display:flex;align-items:center;gap:5px">
+          <div class="txn-status-dot" style="background:${dotColor};box-shadow:0 0 6px ${dotColor}88"></div>
+          <span style="font-size:.72rem;color:var(--text);font-weight:600">Success</span>
+        </div>
+      </div>
+      <div class="txn-cell txn-time-cell">
+        <div><div>${t.date}</div><div style="font-size:.65rem">${t.time}</div></div>
+      </div>
+    </div>`;
+  }).join('');
+
+  // Pagination
+  const pag = document.getElementById('txnPagination');
+  const info = document.getElementById('txnPageInfo');
+  if (list.length > TXN_PER_PAGE) {
+    pag.style.display = 'flex';
+    info.textContent = `${start + 1}–${Math.min(start + TXN_PER_PAGE, list.length)} of ${list.length}`;
+    document.getElementById('btnPrevPage').disabled = txnPage <= 1;
+    document.getElementById('btnNextPage').disabled = txnPage >= totalPages;
+  } else {
+    pag.style.display = 'none';
+  }
+}
+
+function changePage(dir) {
+  const list = getFilteredTxns();
+  const totalPages = Math.ceil(list.length / TXN_PER_PAGE);
+  txnPage = Math.max(1, Math.min(txnPage + dir, totalPages));
+  renderTxnTable();
+}
+
+function updateTxnSummary() {
+  const deposited = transactions.filter(t=>t.type==='deposit').reduce((s,t)=>s+t.amount,0);
+  const withdrawn = transactions.filter(t=>t.type==='withdraw').reduce((s,t)=>s+t.amount,0);
+  const wagered   = transactions.filter(t=>t.type==='bet').reduce((s,t)=>s+t.amount,0);
+  const won       = transactions.filter(t=>t.type==='win').reduce((s,t)=>s+t.amount,0);
+  const bonus     = transactions.filter(t=>t.type==='bonus').reduce((s,t)=>s+t.amount,0);
+  const net       = (deposited + won + bonus) - (withdrawn + wagered);
+
+  const fmt = n => '₦'+Math.abs(n).toLocaleString('en-NG');
+  document.getElementById('sumDeposited').textContent = fmt(deposited);
+  document.getElementById('sumWithdrawn').textContent = fmt(withdrawn);
+  document.getElementById('sumWagered').textContent   = fmt(wagered);
+  document.getElementById('sumWon').textContent       = fmt(won);
+  document.getElementById('sumBonus').textContent     = fmt(bonus);
+  const netEl = document.getElementById('sumNetProfit');
+  netEl.textContent = (net >= 0 ? '+' : '-') + fmt(net);
+  netEl.className = 'txn-sum-value ' + (net >= 0 ? 'green' : 'red');
+}
+
+function clearAllTransactions() {
+  if (!confirm('Clear all transaction history? This cannot be undone.')) return;
+  transactions = [];
+  saveTransactions();
+  renderTxnTable();
+  updateTxnSummary();
+  showToast('Transaction history cleared.', true);
+}
+
+// ===== INIT =====
+setBet(50);
+buildOddsTable();
+drawWheel(0);
+updateWallet();
+loadBonusState();
+loadTransactions();
+renderTxnTable();
+updateTxnSummary();
+
+// Restore pending deposit if player returned from Flutterwave
+(function checkPendingReturn() {
+  try {
+    const p = JSON.parse(localStorage.getItem('nw_pending_txn'));
+    if (p && p.amt) {
+      depositAmount = p.amt;
+      window._pendingTxn = p;
+      document.getElementById('pendingAmt').textContent    = '₦' + p.amt.toLocaleString('en-NG');
+      document.getElementById('pendingRef').textContent    = p.txRef || '—';
+      document.getElementById('pendingMethod').textContent = p.methodLabel || '—';
+      setTimeout(() => document.getElementById('pendingOverlay').classList.add('show'), 800);
+    }
+  } catch(e) {}
+})();
+
+// Auto-open bonus modal on load if available
+setTimeout(()=>{
+  if(!bonusState.claimed) openBonusModal();
+},600);
+</script>
+</body>
+</html>
