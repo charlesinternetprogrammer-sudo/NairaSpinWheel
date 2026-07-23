@@ -171,7 +171,7 @@ function creditPendingEarnings(inv) {
 
 // ─── GUARD — log warning if key somehow missing ──────────────────────────────
 app.use((req, res, next) => {
-  const open = ['/', '/health', '/banks', '/earnings', '/ip', '/webhook'];
+  const open = ['/', '/health', '/banks', '/earnings', '/ip', '/webhook', '/api/webhook'];
   if (open.some(p => req.path === p || req.path.startsWith(p + '/'))) return next();
   if (!FLW_SECRET_KEY) {
     console.error('⚠️  FLW_SECRET_KEY is not set. Check server configuration.');
@@ -203,6 +203,7 @@ app.get('/', (req, res) => {
       'GET  /ip'                      : 'Get server outbound IPv4 for Flutterwave whitelisting',
       'GET  /health'                  : 'Server health & readiness check',
       'GET  /banks'                   : 'List all supported Nigerian banks (21 total)',
+      'GET  /webhook'                 : 'Webhook info & status',
       'POST /invest/confirm'          : 'Activate earnings after Flutterwave deposit',
       'POST /invest/activate-manual'  : 'Activate earnings after bank transfer deposit',
       'GET  /earnings/:user_id'       : 'Get live earnings & wallet balance',
@@ -211,6 +212,7 @@ app.get('/', (req, res) => {
       'POST /withdraw/status'         : 'Check transfer status by reference',
       'GET  /transactions/:user_id'   : 'Full transaction history for a user',
       'POST /webhook'                 : '⚡ Unified webhook — IncomePM (IPM-) + NairaSpinWheel (NSW-)',
+      'POST /api/webhook'             : '⚡ Unified webhook (alternative path) — IncomePM (IPM-) + NairaSpinWheel (NSW-)',
     },
     test_urls: {
       root      : `${req.protocol}://${req.get('host')}/`,
@@ -218,6 +220,7 @@ app.get('/', (req, res) => {
       banks     : `${req.protocol}://${req.get('host')}/banks`,
       server_ip : `${req.protocol}://${req.get('host')}/ip`,
       earnings  : `${req.protocol}://${req.get('host')}/earnings/user-001`,
+      webhook   : `${req.protocol}://${req.get('host')}/webhook (POST only)`,
     },
   });
 });
@@ -317,6 +320,34 @@ app.get('/banks', (req, res) => {
   res.json({ success: true, banks: Object.keys(BANK_CODES) });
 });
 
+// GET /webhook — show webhook info & documentation
+app.get('/webhook', (req, res) => {
+  res.json({
+    success: true,
+    message: 'Webhook is operational',
+    info: 'This webhook handles Flutterwave transfer and payment events',
+    method: 'POST',
+    paths: ['/webhook', '/api/webhook'],
+    description: 'Unified webhook for IncomePM (IPM-) and NairaSpinWheel (NSW-) events',
+    features: [
+      'Transfer completion notifications',
+      'Payment/deposit confirmations',
+      'Automatic refunds on failed transfers',
+      'Multi-app routing by reference prefix',
+    ],
+    headers_required: {
+      'verif-hash': 'Flutterwave webhook signature hash (optional if FLW_WEBHOOK_HASH not set)',
+      'Content-Type': 'application/json',
+    },
+    usage: {
+      from: 'Flutterwave Dashboard → Settings → Webhooks',
+      url: `${req.protocol}://${req.get('host')}/webhook`,
+      alternative: `${req.protocol}://${req.get('host')}/api/webhook`,
+      events: ['transfer.completed', 'charge.completed'],
+    },
+  });
+});
+
 // ─────────────────────────────────────────────────────────────────
 // POST /invest/confirm
 // Called after a successful Flutterwave deposit to activate earnings
@@ -400,7 +431,7 @@ app.post('/invest/confirm', async (req, res) => {
 // POST /invest/activate-manual
 // For bank transfer deposits — activate manually after confirmation
 // Body: { user_id, amount, reference, name, email, phone }
-// ─────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────���───────────
 app.post('/invest/activate-manual', async (req, res) => {
   const { user_id, amount, reference, name, email, phone } = req.body;
 
@@ -701,7 +732,7 @@ app.get('/transactions/:user_id', (req, res) => {
 // Both apps share the same Flutterwave account.
 // Routes by reference prefix: IPM- = IncomePM, NSW- = NairaSpinWheel
 // ─────────────────────────────────────────────────────────────────
-app.post('/webhook', express.raw({ type: 'application/json' }), (req, res) => {
+const handleWebhook = (req, res) => {
   const signature = req.headers['verif-hash'];
   if (FLW_WEBHOOK_HASH && signature !== FLW_WEBHOOK_HASH) {
     console.warn('[webhook] Invalid signature — rejected');
@@ -790,7 +821,10 @@ app.post('/webhook', express.raw({ type: 'application/json' }), (req, res) => {
   }
 
   res.status(200).json({ status: 'received', app: appName, ref });
-});
+};
+
+app.post('/webhook', express.raw({ type: 'application/json' }), handleWebhook);
+app.post('/api/webhook', express.raw({ type: 'application/json' }), handleWebhook);
 
 // 404 — show all available routes
 app.use((req, res) => {
@@ -803,6 +837,7 @@ app.use((req, res) => {
       'GET  /ip',
       'GET  /health',
       'GET  /banks',
+      'GET  /webhook',
       'POST /invest/confirm',
       'POST /invest/activate-manual',
       'GET  /earnings/:user_id',
@@ -811,6 +846,7 @@ app.use((req, res) => {
       'POST /withdraw/status',
       'GET  /transactions/:user_id',
       'POST /webhook',
+      'POST /api/webhook',
     ],
   });
 });
