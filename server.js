@@ -171,7 +171,7 @@ function creditPendingEarnings(inv) {
 
 // ─── GUARD — log warning if key somehow missing ──────────────────────────────
 app.use((req, res, next) => {
-  const open = ['/', '/health', '/banks', '/earnings', '/ip', '/webhook', '/api/webhook'];
+  const open = ['/', '/health', '/banks', '/earnings', '/ip', '/webhook', '/api/webhook', '/transactions', '/invest/confirm', '/invest/activate-manual', '/verify-account', '/withdraw'];
   if (open.some(p => req.path === p || req.path.startsWith(p + '/'))) return next();
   if (!FLW_SECRET_KEY) {
     console.error('⚠️  FLW_SECRET_KEY is not set. Check server configuration.');
@@ -431,7 +431,7 @@ app.post('/invest/confirm', async (req, res) => {
 // POST /invest/activate-manual
 // For bank transfer deposits — activate manually after confirmation
 // Body: { user_id, amount, reference, name, email, phone }
-// ─────────────────────────────────────────────────────���───────────
+// ─────────────────────────────────────────────��───────────────────
 app.post('/invest/activate-manual', async (req, res) => {
   const { user_id, amount, reference, name, email, phone } = req.body;
 
@@ -740,7 +740,14 @@ const handleWebhook = (req, res) => {
   }
 
   let event;
-  try { event = JSON.parse(req.body); } catch (e) { event = req.body; }
+  try {
+    // FIXED: req.body is a Buffer when using express.raw(), so convert it to string first
+    const bodyStr = typeof req.body === 'string' ? req.body : Buffer.isBuffer(req.body) ? req.body.toString('utf-8') : JSON.stringify(req.body);
+    event = JSON.parse(bodyStr);
+  } catch (e) {
+    console.error('[webhook] Parse error:', e.message);
+    return res.status(400).json({ message: 'Invalid JSON payload' });
+  }
 
   const type = event.event;
   const d    = event.data;
@@ -823,6 +830,7 @@ const handleWebhook = (req, res) => {
   res.status(200).json({ status: 'received', app: appName, ref });
 };
 
+// FIXED: Move webhook routes BEFORE the 404 catch-all
 app.post('/webhook', express.raw({ type: 'application/json' }), handleWebhook);
 app.post('/api/webhook', express.raw({ type: 'application/json' }), handleWebhook);
 
@@ -850,6 +858,7 @@ app.use((req, res) => {
     ],
   });
 });
+
 // Error handler
 app.use((err, req, res, next) => {
   console.error('[error]', err.message);
