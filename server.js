@@ -183,7 +183,7 @@ app.use((req, res, next) => {
   next();
 });
 
-// ═════════════════════════════════════════════════════════════════
+// ════════════���════════════════════════════════════════════════════
 //  ROUTES
 // ═════════════════════════════════════════════════════════════════
 
@@ -204,6 +204,7 @@ app.get('/', (req, res) => {
       'GET  /health'                  : 'Server health & readiness check',
       'GET  /banks'                   : 'List all supported Nigerian banks (21 total)',
       'GET  /webhook'                 : 'Webhook info & status',
+      'GET  /api/webhook'             : 'Webhook info & status (alternative path)',
       'POST /invest/confirm'          : 'Activate earnings after Flutterwave deposit',
       'POST /invest/activate-manual'  : 'Activate earnings after bank transfer deposit',
       'GET  /earnings/:user_id'       : 'Get live earnings & wallet balance',
@@ -221,6 +222,7 @@ app.get('/', (req, res) => {
       server_ip : `${req.protocol}://${req.get('host')}/ip`,
       earnings  : `${req.protocol}://${req.get('host')}/earnings/user-001`,
       webhook   : `${req.protocol}://${req.get('host')}/webhook (POST only)`,
+      webhook_alt : `${req.protocol}://${req.get('host')}/api/webhook (POST only)`,
     },
   });
 });
@@ -348,6 +350,34 @@ app.get('/webhook', (req, res) => {
   });
 });
 
+// GET /api/webhook — show webhook info & documentation (alternative path)
+app.get('/api/webhook', (req, res) => {
+  res.json({
+    success: true,
+    message: 'Webhook is operational (alternative path)',
+    info: 'This webhook handles Flutterwave transfer and payment events',
+    method: 'POST',
+    paths: ['/webhook', '/api/webhook'],
+    description: 'Unified webhook for IncomePM (IPM-) and NairaSpinWheel (NSW-) events',
+    features: [
+      'Transfer completion notifications',
+      'Payment/deposit confirmations',
+      'Automatic refunds on failed transfers',
+      'Multi-app routing by reference prefix',
+    ],
+    headers_required: {
+      'verif-hash': 'Flutterwave webhook signature hash (optional if FLW_WEBHOOK_HASH not set)',
+      'Content-Type': 'application/json',
+    },
+    usage: {
+      from: 'Flutterwave Dashboard → Settings → Webhooks',
+      url: `${req.protocol}://${req.get('host')}/webhook`,
+      alternative: `${req.protocol}://${req.get('host')}/api/webhook`,
+      events: ['transfer.completed', 'charge.completed'],
+    },
+  });
+});
+
 // ─────────────────────────────────────────────────────────────────
 // POST /invest/confirm
 // Called after a successful Flutterwave deposit to activate earnings
@@ -431,7 +461,7 @@ app.post('/invest/confirm', async (req, res) => {
 // POST /invest/activate-manual
 // For bank transfer deposits — activate manually after confirmation
 // Body: { user_id, amount, reference, name, email, phone }
-// ─────────────────────────────────────────────��───────────────────
+// ─────────────────────────────────────────────────────────────────
 app.post('/invest/activate-manual', async (req, res) => {
   const { user_id, amount, reference, name, email, phone } = req.body;
 
@@ -846,6 +876,7 @@ app.use((req, res) => {
       'GET  /health',
       'GET  /banks',
       'GET  /webhook',
+      'GET  /api/webhook',
       'POST /invest/confirm',
       'POST /invest/activate-manual',
       'GET  /earnings/:user_id',
