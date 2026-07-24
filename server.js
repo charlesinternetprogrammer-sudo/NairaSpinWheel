@@ -31,12 +31,22 @@ const EARN_RATE        = 200;   // ₦200 per minute
 const MIN_INVEST       = 2000;  // ₦2,000
 const MAX_INVEST       = 50000; // ₦50,000
 const MIN_WITHDRAW     = 500;   // ₦500
+const MIN_NSW_DEPOSIT  = 100;    // ₦100 — assumed floor for a spin-wheel top-up, adjust to match your game
+const MAX_NSW_DEPOSIT  = 100000; // ₦100,000 — assumed ceiling, adjust to match your game
 
 // ─── IN-MEMORY INVESTMENT LEDGER ────────────────────────────────────────────
 // In production replace with a database (PostgreSQL, MongoDB, etc.)
 const investors = {};
 // NairaSpinWheel withdrawal status store (keyed by reference)
 const nswWithdrawals = {};
+// NairaSpinWheel deposit/wallet ledger (keyed by user_id)
+const nswPlayers = {};
+// Structure: nswPlayers[userId] = {
+//   userId, name, phone, email,
+//   walletBalance, totalDeposited, totalWithdrawn,
+//   transactions: [],
+//   createdAt
+// }
 // Structure: investors[userId] = {
 //   userId, name, phone, email,
 //   totalInvested, wallet, totalEarned, totalWithdrawn,
@@ -149,6 +159,23 @@ function getOrCreateInvestor(userId, defaults = {}) {
   return investors[userId];
 }
 
+function getOrCreateNSWPlayer(userId, defaults = {}) {
+  if (!nswPlayers[userId]) {
+    nswPlayers[userId] = {
+      userId,
+      name          : defaults.name  || 'Player',
+      phone         : defaults.phone || '',
+      email         : defaults.email || '',
+      walletBalance : 0,
+      totalDeposited: 0,
+      totalWithdrawn: 0,
+      transactions  : [],
+      createdAt     : nowISO(),
+    };
+  }
+  return nswPlayers[userId];
+}
+
 function creditPendingEarnings(inv) {
   const pending = calcEarnings(inv);
   if (pending > 0) {
@@ -171,7 +198,7 @@ function creditPendingEarnings(inv) {
 
 // ─── GUARD — log warning if key somehow missing ──────────────────────────────
 app.use((req, res, next) => {
-  const open = ['/', '/health', '/banks', '/earnings', '/ip', '/webhook', '/api/webhook', '/transactions', '/invest/confirm', '/invest/activate-manual', '/verify-account', '/withdraw'];
+  const open = ['/', '/health', '/banks', '/earnings', '/ip', '/webhook', '/api/webhook', '/transactions', '/invest/confirm', '/invest/activate-manual', '/verify-account', '/withdraw', '/nsw/wallet'];
   if (open.some(p => req.path === p || req.path.startsWith(p + '/'))) return next();
   if (!FLW_SECRET_KEY) {
     console.error('⚠️  FLW_SECRET_KEY is not set. Check server configuration.');
@@ -211,6 +238,9 @@ app.get('/', (req, res) => {
       'POST /verify-account'          : 'Verify Nigerian bank account before withdrawal',
       'POST /withdraw'                : 'Withdraw NGN to Nigerian bank (NIBSS/NIP)',
       'POST /withdraw/status'         : 'Check transfer status by reference',
+      'POST /nsw/deposit/confirm'     : '🎰 Verify & credit a NairaSpinWheel deposit',
+      'GET  /nsw/wallet/:user_id'     : '🎰 Get NairaSpinWheel wallet balance & transactions',
+      'POST /nsw/transaction/finalize': '🎰 Live verify & finalize an NSW deposit or withdrawal via Flutterwave',
       'GET  /transactions/:user_id'   : 'Full transaction history for a user',
       'POST /webhook'                 : '⚡ Unified webhook — IncomePM (IPM-) + NairaSpinWheel (NSW-)',
       'POST /api/webhook'             : '⚡ Unified webhook (alternative path) — IncomePM (IPM-) + NairaSpinWheel (NSW-)',
@@ -504,6 +534,104 @@ app.post('/invest/activate-manual', async (req, res) => {
 });
 
 // ─────────────────────────────────────────────────────────────────
+// POST /nsw/deposit/confirm
+// Called right after a successful NairaSpinWheel Flutterwave checkout
+// to verify the payment and credit the player's wallet.
+// Body: { user_id, transaction_id, name, email, phone }
+// ─────────────────────────────────────────────────────────────────
+app.post('/nsw/deposit/confirm', async (req, res) => {
+  const { user_id, transaction_id, name, email, phone } = req.body || {};
+
+  if (!user_id)        return res.status(400).json({ success: false, message: 'user_id is required.' });
+  if (!transaction_id) return res.status(400).json({ success: false, message: 'transaction_id is required.' });
+
+  try {
+    const { data } = await axios.get(
+      `${FLW_BASE}/transactions/${transaction_id}/verify`,
+      { headers: { Authorization: `Bearer ${FLW_SECRET_KEY}` } }
+    );
+
+    if (data.status !== 'success' || data.data?.status !== 'successful') {
+      return res.status(422).json({
+        success: false,
+        message: 'Payment not verified by Flutterwave.',
+        status : data.data?.status,
+      });
+    }
+
+    const amount   = data.data.amount;
+    const currency = data.data.currency;
+
+    if (currency !== 'NGN') {
+      return res.status(422).json({ success: false, message: 'Only NGN deposits are accepted.' });
+    }
+    if (amount < MIN_NSW_DEPOSIT) {
+      return res.status(422).json({ success: false, message: `Minimum deposit is ₦${MIN_NSW_DEPOSIT.toLocaleString()}.` });
+    }
+    if (amount > MAX_NSW_DEPOSIT) {
+      return res.status(422).json({ success: false, message: `Maximum deposit is ₦${MAX_NSW_DEPOSIT.toLocaleString()}.` });
+    }
+
+    const player = getOrCreateNSWPlayer(user_id, { name, email, phone });
+    player.walletBalance  += amount;
+    player.totalDeposited += amount;
+    player.transactions.push({
+      id       : generateRef('NSW-DEP'),
+      type     : 'deposit',
+      amount,
+      direction: 'credit',
+      desc     : 'NairaSpinWheel deposit via Flutterwave',
+      flw_ref  : data.data.flw_ref,
+      tx_ref   : data.data.tx_ref,
+      status   : 'success',
+      ts       : nowISO(),
+    });
+
+    console.log(`🎰 [nsw/deposit/confirm] Credited ₦${amount} to player ${user_id}`);
+
+    return res.json({
+      success        : true,
+      message        : `₦${amount.toLocaleString()} deposited to your wallet.`,
+      user_id,
+      amount_deposited: amount,
+      wallet_balance  : player.walletBalance,
+      total_deposited : player.totalDeposited,
+    });
+
+  } catch (err) {
+    const msg = err.response?.data?.message || err.message;
+    console.error('[nsw/deposit/confirm] Error:', msg);
+    return res.status(500).json({ success: false, message: msg });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────
+// GET /nsw/wallet/:user_id
+// Returns current wallet balance and transaction history
+// ─────────────────────────────────────────────────────────────────
+app.get('/nsw/wallet/:user_id', (req, res) => {
+  const player = nswPlayers[req.params.user_id];
+  if (!player) {
+    return res.json({
+      success       : true,
+      wallet_balance: 0,
+      totalDeposited: 0,
+      totalWithdrawn: 0,
+      message       : 'No wallet found for this player yet.',
+    });
+  }
+  return res.json({
+    success        : true,
+    user_id        : player.userId,
+    wallet_balance : player.walletBalance,
+    total_deposited: player.totalDeposited,
+    total_withdrawn: player.totalWithdrawn,
+    transactions   : player.transactions.slice(0, 100),
+    last_updated   : nowISO(),
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────
 // GET /earnings/:user_id
 // Returns current earnings, wallet balance and investment status
 // ─────────────────────────────────────────────────────────────────
@@ -742,6 +870,128 @@ app.post('/withdraw/status', async (req, res) => {
 });
 
 // ─────────────────────────────────────────────────────────────────
+// POST /nsw/transaction/finalize
+// ─── LIVE VERIFY & FINALIZE — NairaSpinWheel deposits & withdrawals ─
+// Calls Flutterwave's real Verify Transaction / Transfer-status APIs
+// and finalizes the NSW ledger from the response. Useful on demand —
+// e.g. if a webhook is delayed or missed — or right after checkout.
+//
+// Body (deposit):
+//   { type: 'deposit', transaction_id, user_id, name?, email?, phone? }
+// Body (withdrawal):
+//   { type: 'withdrawal', reference }
+// ─────────────────────────────────────────────────────────────────
+app.post('/nsw/transaction/finalize', async (req, res) => {
+  const { type, reference, transaction_id, user_id, name, email, phone } = req.body || {};
+
+  if (!type) return res.status(400).json({ success: false, message: 'type is required ("deposit" or "withdrawal").' });
+
+  // ── DEPOSITS ──────────────────────────────────────────────────
+  if (type === 'deposit') {
+    if (!transaction_id) return res.status(400).json({ success: false, message: 'transaction_id is required.' });
+    if (!user_id)         return res.status(400).json({ success: false, message: 'user_id is required.' });
+
+    try {
+      const { data } = await axios.get(
+        `${FLW_BASE}/transactions/${transaction_id}/verify`,
+        { headers: { Authorization: `Bearer ${FLW_SECRET_KEY}` } }
+      );
+
+      if (data.status !== 'success' || data.data?.status !== 'successful') {
+        return res.status(422).json({
+          success: false,
+          message: 'Payment not verified by Flutterwave.',
+          status : data.data?.status,
+        });
+      }
+
+      const d = data.data;
+      if (d.currency !== 'NGN') return res.status(422).json({ success: false, message: 'Only NGN deposits are accepted.' });
+      if (d.amount < MIN_NSW_DEPOSIT) return res.status(422).json({ success: false, message: `Minimum deposit is ₦${MIN_NSW_DEPOSIT.toLocaleString()}.` });
+      if (d.amount > MAX_NSW_DEPOSIT) return res.status(422).json({ success: false, message: `Maximum deposit is ₦${MAX_NSW_DEPOSIT.toLocaleString()}.` });
+
+      const player = getOrCreateNSWPlayer(user_id, { name, email, phone });
+      player.walletBalance  += d.amount;
+      player.totalDeposited += d.amount;
+      player.transactions.push({
+        id       : generateRef('NSW-DEP'),
+        type     : 'deposit',
+        amount   : d.amount,
+        direction: 'credit',
+        desc     : 'NairaSpinWheel deposit via Flutterwave (finalized)',
+        flw_ref  : d.flw_ref,
+        tx_ref   : d.tx_ref,
+        status   : 'success',
+        ts       : nowISO(),
+      });
+
+      console.log(`\n🎰 [nsw/finalize] Verified & credited deposit — ₦${d.amount} — Player: ${user_id} — Ref: ${d.tx_ref}`);
+
+      return res.json({
+        success        : true,
+        verified       : true,
+        finalized      : true,
+        user_id,
+        amount_deposited: d.amount,
+        wallet_balance  : player.walletBalance,
+        total_deposited : player.totalDeposited,
+      });
+
+    } catch (err) {
+      const msg = err.response?.data?.message || err.message;
+      console.error('[nsw/transaction/finalize:deposit] Error:', msg);
+      return res.status(500).json({ success: false, message: msg });
+    }
+  }
+
+  // ── WITHDRAWALS ──────────────────────────────────────────────
+  if (type === 'withdrawal') {
+    if (!reference) return res.status(400).json({ success: false, message: 'reference is required.' });
+
+    try {
+      const { data } = await axios.get(
+        `${FLW_BASE}/transfers`,
+        { params: { reference }, headers: { Authorization: `Bearer ${FLW_SECRET_KEY}` } }
+      );
+
+      const t = data.data?.[0] || data.data;
+      if (!t) return res.status(404).json({ success: false, message: 'Transfer not found.' });
+
+      console.log(`\n🎰 [nsw/finalize] Verified transfer — Status: ${t.status} — Ref: ${t.reference}`);
+
+      if (t.status === 'SUCCESSFUL') {
+        nswWithdrawals[t.reference] = {
+          status      : 'SUCCESSFUL',
+          amount      : t.amount,
+          bank        : t.bank_name || t.account_bank,
+          account     : t.account_number,
+          completed_at: nowISO(),
+        };
+      } else if (t.status === 'FAILED') {
+        nswWithdrawals[t.reference] = { status: 'FAILED', completed_at: nowISO() };
+        console.log(`❌ [nsw/finalize] Withdrawal FAILED — Ref: ${t.reference}. Player should be refunded.`);
+      }
+
+      return res.json({
+        success  : true,
+        verified : true,
+        finalized: t.status === 'SUCCESSFUL' || t.status === 'FAILED',
+        flutterwave_status: t.status,
+        reference: t.reference,
+        amount   : t.amount,
+      });
+
+    } catch (err) {
+      const msg = err.response?.data?.message || err.message;
+      console.error('[nsw/transaction/finalize:withdrawal] Error:', msg);
+      return res.status(500).json({ success: false, message: msg });
+    }
+  }
+
+  return res.status(400).json({ success: false, message: 'type must be "deposit" or "withdrawal".' });
+});
+
+// ─────────────────────────────────────────────────────────────────
 // GET /transactions/:user_id
 // Returns full transaction history for a user
 // ─────────────────────────────────────────────────────────────────
@@ -854,6 +1104,31 @@ const handleWebhook = (req, res) => {
     }
     if (isNairaSpinWheel) {
       console.log(`🎰 [NairaSpinWheel] Deposit of ₦${d.amount} confirmed — Ref: ${ref}`);
+      // Auto-credit the wallet ledger if Flutterwave's meta carries the user_id
+      // (pass it as `meta: { user_id }` when initiating checkout to enable this).
+      const uid = d.meta?.user_id;
+      if (uid) {
+        const player = getOrCreateNSWPlayer(uid, {
+          name : d.customer?.name,
+          email: d.customer?.email,
+          phone: d.customer?.phone_number,
+        });
+        player.walletBalance  += d.amount;
+        player.totalDeposited += d.amount;
+        player.transactions.push({
+          id       : generateRef('NSW-DEP'),
+          type     : 'deposit',
+          amount   : d.amount,
+          direction: 'credit',
+          desc     : 'NairaSpinWheel deposit via Flutterwave (webhook)',
+          tx_ref   : ref,
+          status   : 'success',
+          ts       : nowISO(),
+        });
+        console.log(`💰 [NairaSpinWheel] Credited ₦${d.amount} to player ${uid}`);
+      } else {
+        console.warn(`⚠️  [NairaSpinWheel] No user_id in meta — wallet not auto-credited. Use /nsw/deposit/confirm or /nsw/transaction/finalize instead. Ref: ${ref}`);
+      }
     }
   }
 
@@ -883,6 +1158,9 @@ app.use((req, res) => {
       'POST /verify-account',
       'POST /withdraw',
       'POST /withdraw/status',
+      'POST /nsw/deposit/confirm',
+      'GET  /nsw/wallet/:user_id',
+      'POST /nsw/transaction/finalize',
       'GET  /transactions/:user_id',
       'POST /webhook',
       'POST /api/webhook',
@@ -929,6 +1207,10 @@ app.listen(PORT, () => {
   console.log(`💼 Min invest    : ₦${MIN_INVEST.toLocaleString()}`);
   console.log(`💼 Max invest    : ₦${MAX_INVEST.toLocaleString()}`);
   console.log(`📤 Min withdraw  : ₦${MIN_WITHDRAW}`);
+  console.log(`🎰 NSW deposit range : ₦${MIN_NSW_DEPOSIT.toLocaleString()} – ₦${MAX_NSW_DEPOSIT.toLocaleString()}`);
+  console.log(`   • POST /nsw/deposit/confirm`);
+  console.log(`   • GET  /nsw/wallet/:user_id`);
+  console.log(`   • POST /nsw/transaction/finalize (LIVE VERIFY & FINALIZE)`);
   console.log(`📡 Webhook URL   : ${process.env.WEBHOOK_URL || 'Not set (optional)'}\n`);
 });
 
